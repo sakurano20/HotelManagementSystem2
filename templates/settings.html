@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/sidebar-brand.css') }}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    {% if system_settings.theme == 'dark' %}
+    :root {
+      --sidebar-bg: #0d1117;
+      --sidebar-hover: #161b22;
+      --sidebar-active: #21262d;
+      --primary: #58a6ff;
+      --primary-dark: #1f6feb;
+    }
+    body { background: #0d1117; color: #c9d1d9; }
+    .card { background: #161b22; color: #c9d1d9; }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1020; background: #161b22; color: #c9d1d9; }
+    {% elif system_settings.theme == 'blue' %}
+    :root {
+      --sidebar-bg: #1a365d;
+      --sidebar-hover: #2c5282;
+      --sidebar-active: #2b6cb0;
+      --primary: #4299e1;
+      --primary-dark: #3182ce;
+    }
+    {% else %}
+    :root {
+      --sidebar-bg: #1e2a4a;
+      --sidebar-hover: #2d3e6d;
+      --sidebar-active: #3b5998;
+      --primary: #4f6fe0;
+      --primary-dark: #3a5299;
+    }
+    {% endif %}
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f5f7fa;
+    }
+    .sidebar {
+      min-height: 100vh;
+      background: var(--sidebar-bg);
+      position: fixed;
+      width: 240px;
+    }
+    .sidebar .brand {
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .sidebar .brand-logo {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #4f6fe0, #58a6ff);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+      flex-shrink: 0;
+    }
+    .sidebar .brand-logo svg {
+      width: 40px;
+      height: 40px;
+    }
+    .sidebar .brand-img {
+      width: auto;
+      max-width: 160px;
+      height: 70px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4f6fe0, #58a6ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 8px 10px;
+    }
+    .sidebar .brand-img img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    .sidebar .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar .brand h4 {
+      color: #fff;
+      font-weight: 800;
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+    .sidebar .brand span {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.7);
+      padding: 0.9rem 1.5rem;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .sidebar .nav-link:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+    }
+    .sidebar .nav-link.active {
+      background: var(--sidebar-active);
+      color: #fff;
+      border-left-color: var(--primary);
+    }
+    .sidebar .nav-link i { width: 24px; }
+    .main-content { margin-left: 240px; min-height: 100vh; }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+      background: #fff;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+    }
+    .top-bar h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin: 0;
+      color: #2c3e50;
+    }
+    .card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      background: #fff;
+    }
+    .card-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border-radius: 16px 16px 0 0 !important;
+      padding: 1.2rem 1.5rem;
+    }
+    .card-header h5 { margin: 0; font-weight: 600; }
+    .card-body { padding: 1.5rem; }
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .form-label { font-weight: 500; color: #495057; margin-bottom: 0.5rem; }
+    .form-control, .form-select {
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      border: 1px solid #dee2e6;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 111, 224, 0.1);
+    }
+    .logo-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .logo-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .theme-btn {
+      width: 60px;
+      height: 40px;
+      border-radius: 8px;
+      border: 2px solid #dee2e6;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .theme-btn.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 111, 224, 0.2);
+    }
+    .theme-btn.light { background: #fff; }
+    .theme-btn.dark { background: #1e2a4a; }
+    .theme-btn.blue { background: #4f6fe0; }
+    .nav-tabs .nav-link {
+      border: none;
+      color: #6c757d;
+      padding: 1rem 1.5rem;
+      font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+      background: #fff;
+      color: var(--primary);
+      border-bottom: 3px solid var(--primary);
+    }
+    .table td { vertical-align: middle; padding: 1rem; }
+    .role-badge {
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1050;
+        width: 260px !important;
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+      }
+      .sidebar-backdrop.show {
+        display: block;
+      }
+      .main-content {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+      .mobile-nav-btn {
+        display: flex !important;
+      }
+      .top-bar {
+        padding: 1rem !important;
+      }
+      .top-bar h1 {
+        font-size: 1.3rem;
+      }
+    }
+    @media (max-width: 767px) {
+      .table-responsive {
+        font-size: 0.85rem;
+      }
+      .card-body {
+        padding: 1rem !important;
+      }
+    }
+    .mobile-nav-btn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1030;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table {
+      min-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Backdrop for Mobile -->
+  <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <!-- Mobile Navigation Button -->
+  <button class="mobile-nav-btn" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div class="container-fluid p-0">
+    <div class="row g-0">
+      <!-- Sidebar -->
+      <nav class="col-md-2 sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-logo">
+            {% if system_settings.logo_icon == 'hotel' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+            </svg>
+            {% elif system_settings.logo_icon == 'grid' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+            </svg>
+            {% elif system_settings.logo_icon == 'briefcase' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+            </svg>
+            {% else %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.66l-7-3.5V8.82zm9 11.16v-7.66l7-3.5v7.66l-7 3.5z"/>
+            </svg>
+            {% endif %}
+          </div>
+          <div class="brand-text">
+            <h4>DNZTech</h4>
+            <span>Management System</span>
+          </div>
+        </div>
+        <ul class="nav flex-column mt-3">
+          <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="{{ url_for('rooms') }}" class="nav-link"><i class="bi bi-door-open me-2"></i>Rooms</a></li>
+          <li class="nav-item"><a href="{{ url_for('reservations') }}" class="nav-link"><i class="bi bi-calendar-check me-2"></i>Reservations</a></li>
+          <li class="nav-item"><a href="{{ url_for('checkins') }}" class="nav-link"><i class="bi bi-box-arrow-in-right me-2"></i>Check-ins</a></li>
+          <li class="nav-item"><a href="{{ url_for('foods') }}" class="nav-link"><i class="bi bi-cup-hot-fill me-2"></i>Foods</a></li>
+          <li class="nav-item"><a href="{{ url_for('food_orders') }}" class="nav-link"><i class="bi bi-receipt me-2"></i>Food Orders</a></li>
+          <li class="nav-item"><a href="{{ url_for('addon_orders') }}" class="nav-link"><i class="bi bi-plus-circle me-2"></i>Addon Orders</a></li>
+          <li class="nav-item"><a href="{{ url_for('addons') }}" class="nav-link"><i class="bi bi-puzzle me-2"></i>Add-ons</a></li>
+          <li class="nav-item"><a href="{{ url_for('payments') }}" class="nav-link"><i class="bi bi-credit-card me-2"></i>Payments</a></li>
+          <li class="nav-item"><a href="{{ url_for('settings') }}" class="nav-link active"><i class="bi bi-gear me-2"></i>Settings</a></li>
+          <li class="nav-item mt-5"><a href="{{ url_for('logout') }}" class="nav-link"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="col-md-10 main-content">
+        <div class="top-bar">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="bi bi-gear me-2"></i>Settings</h1>
+          </div>
+        </div>
+
+        <div class="card m-4">
+          <div class="card-header">
+            <ul class="nav nav-tabs" id="settingsTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'general' %}active{% endif %}" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
+                  <i class="bi bi-sliders me-2"></i>General
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'appearance' %}active{% endif %}" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance" type="button">
+                  <i class="bi bi-palette me-2"></i>Appearance
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'users' %}active{% endif %}" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                  <i class="bi bi-people me-2"></i>Users
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'backup' %}active{% endif %}" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button">
+                  <i class="bi bi-cloud-upload me-2"></i>Backup
+                </button>
+              </li>
+              {% if user_role == 'admin' %}
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'permissions' %}active{% endif %}" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions" type="button">
+                  <i class="bi bi-shield-lock me-2"></i>Staff Permissions
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'email' %}active{% endif %}" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button">
+                  <i class="bi bi-envelope me-2"></i>Email
+                </button>
+              </li>
+              {% endif %}
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'about' %}active{% endif %}" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button">
+                  <i class="bi bi-info-circle me-2"></i>About
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div class="card-body">
+            <div class="tab-content" id="settingsTabContent">
+              <!-- General Settings -->
+              <div class="tab-pane fade {% if active_tab == 'general' %}show active{% endif %}" id="general">
+                <form method="POST" enctype="multipart/form-data">
+                  <input type="hidden" name="setting_group" value="general">
+                  <h5 class="mb-4"><i class="bi bi-building me-2"></i>Company Information</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" name="company_name" value="{{ settings.company_name or '' }}" class="form-control" placeholder="Hotel Name">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">App/Brand Name</label>
+                        <input type="text" name="app_name" value="{{ settings.app_name or 'DNZTech IMS' }}" class="form-control" placeholder="DNZTech IMS">
+                        <small class="text-muted">This name appears in the sidebar logo</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Logo</label>
+                        <input type="file" name="logo" class="form-control" accept="image/*">
+                        <small class="text-muted">Upload your logo (PNG, JPG, SVG). Recommended size: 200x60px</small>
+                      </div>
+                      {% if settings.logo %}
+                      <div class="mt-2">
+                        <img src="{{ url_for('static', filename='uploads/' + settings.logo) }}" alt="Current Logo" style="height: 50px; border-radius: 8px;">
+                        <small class="text-muted ms-2">Current logo</small>
+                      </div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Logo Icon Style</label>
+                        <select name="logo_icon" class="form-select">
+                          <option value="building" {% if settings.logo_icon == 'building' %}selected{% endif %}>Building</option>
+                          <option value="hotel" {% if settings.logo_icon == 'hotel' %}selected{% endif %}>Hotel</option>
+                          <option value="grid" {% if settings.logo_icon == 'grid' %}selected{% endif %}>Grid</option>
+                          <option value="briefcase" {% if settings.logo_icon == 'briefcase' %}selected{% endif %}>Briefcase</option>
+                        </select>
+                        <small class="text-muted">Choose the icon style for your logo</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Logo Size (px)</label>
+                        <input type="number" name="logo_size" value="{{ settings.logo_size or '44' }}" class="form-control" min="20" max="100" placeholder="44">
+                        <small class="text-muted">Height in pixels (20-100). Default: 44px</small>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Logo Width (px)</label>
+                        <input type="number" name="logo_width" value="{{ settings.logo_width or '' }}" class="form-control" min="20" max="200" placeholder="Auto">
+                        <small class="text-muted">Width in pixels (20-200). Leave empty for auto</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label">Tax ID / Vat Number</label>
+                        <input type="text" name="company_tax_id" value="{{ settings.company_tax_id or '' }}" class="form-control" placeholder="Tax ID">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label">Company Address</label>
+                        <input type="text" name="company_address" value="{{ settings.company_address or '' }}" class="form-control" placeholder="123 Main Street, City, Country">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="company_phone" value="{{ settings.company_phone or '' }}" class="form-control" placeholder="+1 234 567 890">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="company_email" value="{{ settings.company_email or '' }}" class="form-control" placeholder="info@hotel.com">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Website</label>
+                        <input type="text" name="company_website" value="{{ settings.company_website or '' }}" class="form-control" placeholder="www.hotel.com">
+                      </div>
+                    </div>
+                  </div>
+
+                  <h5 class="mb-4 mt-5"><i class="bi bi-currency-dollar me-2"></i>Currency & Tax Settings</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label">Currency Code</label>
+                        <select name="currency" class="form-select">
+                          <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>USD - US Dollar</option>
+                          <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+                          <option value="GBP" {% if settings.currency == 'GBP' %}selected{% endif %}>GBP - British Pound</option>
+                          <option value="PHP" {% if settings.currency == 'PHP' %}selected{% endif %}>PHP - Philippine Peso</option>
+                          <option value="INR" {% if settings.currency == 'INR' %}selected{% endif %}>INR - Indian Rupee</option>
+                          <option value="THB" {% if settings.currency == 'THB' %}selected{% endif %}>THB - Thai Baht</option>
+                          <option value="MYR" {% if settings.currency == 'MYR' %}selected{% endif %}>MYR - Malaysian Ringgit</option>
+                          <option value="IDR" {% if settings.currency == 'IDR' %}selected{% endif %}>IDR - Indonesian Rupiah</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label">Currency Symbol</label>
+                        <input type="text" name="currency_symbol" value="{{ settings.currency_symbol or '$' }}" class="form-control" placeholder="$">
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label">Tax Rate (%)</label>
+                        <input type="number" name="tax_rate" value="{{ settings.tax_rate or '10' }}" class="form-control" placeholder="10" step="0.1" min="0" max="100">
+                        <small class="text-muted">Applied to all payments</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" name="require_downpayment" value="true" id="requireDownpayment" {% if settings.require_downpayment == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="requireDownpayment">
+                            <strong>Require Downpayment</strong>
+                            <small class="d-block text-muted">Guests must pay a downpayment when making a reservation</small>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h5 class="mb-4"><i class="bi bi-globe me-2"></i>Timezone Settings</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">System Timezone</label>
+                        <select name="system_timezone" class="form-select" id="timezoneSelect">
+                          <optgroup label="Americas">
+                            <option value="America/New_York">America - New York (GMT-5)</option>
+                            <option value="America/Los_Angeles">America - Los Angeles (GMT-8)</option>
+                            <option value="America/Chicago">America - Chicago (GMT-6)</option>
+                            <option value="America/Denver">America - Denver (GMT-7)</option>
+                            <option value="America/Phoenix">America - Phoenix (GMT-7)</option>
+                            <option value="America/Toronto">America - Toronto (GMT-5)</option>
+                            <option value="America/Vancouver">America - Vancouver (GMT-8)</option>
+                            <option value="America/Mexico_City">America - Mexico City (GMT-6)</option>
+                            <option value="America/Bogota">America - Bogota (GMT-5)</option>
+                            <option value="America/Lima">America - Lima (GMT-5)</option>
+                            <option value="America/Sao_Paulo">America - Sao Paulo (GMT-3)</option>
+                            <option value="America/Argentina/Buenos_Aires">America - Buenos Aires (GMT-3)</option>
+                            <option value="America/Santiago">America - Santiago (GMT-4)</option>
+                          </optgroup>
+                          <optgroup label="Europe">
+                            <option value="Europe/London">Europe - London (GMT+0)</option>
+                            <option value="Europe/Dublin">Europe - Dublin (GMT+0)</option>
+                            <option value="Europe/Paris">Europe - Paris (GMT+1)</option>
+                            <option value="Europe/Berlin">Europe - Berlin (GMT+1)</option>
+                            <option value="Europe/Amsterdam">Europe - Amsterdam (GMT+1)</option>
+                            <option value="Europe/Brussels">Europe - Brussels (GMT+1)</option>
+                            <option value="Europe/Madrid">Europe - Madrid (GMT+1)</option>
+                            <option value="Europe/Rome">Europe - Rome (GMT+1)</option>
+                            <option value="Europe/Vienna">Europe - Vienna (GMT+1)</option>
+                            <option value="Europe/Stockholm">Europe - Stockholm (GMT+1)</option>
+                            <option value="Europe/Oslo">Europe - Oslo (GMT+1)</option>
+                            <option value="Europe/Copenhagen">Europe - Copenhagen (GMT+1)</option>
+                            <option value="Europe/Helsinki">Europe - Helsinki (GMT+2)</option>
+                            <option value="Europe/Warsaw">Europe - Warsaw (GMT+1)</option>
+                            <option value="Europe/Prague">Europe - Prague (GMT+1)</option>
+                            <option value="Europe/Budapest">Europe - Budapest (GMT+1)</option>
+                            <option value="Europe/Athens">Europe - Athens (GMT+2)</option>
+                            <option value="Europe/Istanbul">Europe - Istanbul (GMT+3)</option>
+                            <option value="Europe/Moscow">Europe - Moscow (GMT+3)</option>
+                          </optgroup>
+                          <optgroup label="Asia">
+                            <option value="Asia/Dubai">Asia - Dubai (GMT+4)</option>
+                            <option value="Asia/Karachi">Asia - Karachi (GMT+5)</option>
+                            <option value="Asia/Kolkata">Asia - Kolkata (GMT+5:30)</option>
+                            <option value="Asia/Colombo">Asia - Colombo (GMT+5:30)</option>
+                            <option value="Asia/Kathmandu">Asia - Kathmandu (GMT+5:45)</option>
+                            <option value="Asia/Dhaka">Asia - Dhaka (GMT+6)</option>
+                            <option value="Asia/Bangkok">Asia - Bangkok (GMT+7)</option>
+                            <option value="Asia/Jakarta">Asia - Jakarta (GMT+7)</option>
+                            <option value="Asia/Ho_Chi_Minh">Asia - Ho Chi Minh (GMT+7)</option>
+                            <option value="Asia/Manila">Asia - Manila (GMT+8)</option>
+                            <option value="Asia/Singapore">Asia - Singapore (GMT+8)</option>
+                            <option value="Asia/Hong_Kong">Asia - Hong Kong (GMT+8)</option>
+                            <option value="Asia/Shanghai">Asia - Shanghai (GMT+8)</option>
+                            <option value="Asia/Beijing">Asia - Beijing (GMT+8)</option>
+                            <option value="Asia/Taipei">Asia - Taipei (GMT+8)</option>
+                            <option value="Asia/Seoul">Asia - Seoul (GMT+9)</option>
+                            <option value="Asia/Tokyo">Asia - Tokyo (GMT+9)</option>
+                            <option value="Asia/Tehran">Asia - Tehran (GMT+3:30)</option>
+                            <option value="Asia/Jerusalem">Asia - Jerusalem (GMT+2)</option>
+                            <option value="Asia/Baghdad">Asia - Baghdad (GMT+3)</option>
+                          </optgroup>
+                          <optgroup label="Pacific">
+                            <option value="Australia/Perth">Australia - Perth (GMT+8)</option>
+                            <option value="Australia/Brisbane">Australia - Brisbane (GMT+10)</option>
+                            <option value="Australia/Sydney">Australia - Sydney (GMT+10)</option>
+                            <option value="Australia/Melbourne">Australia - Melbourne (GMT+10)</option>
+                            <option value="Pacific/Auckland">Pacific - Auckland (GMT+12)</option>
+                            <option value="Pacific/Honolulu">Pacific - Honolulu (GMT-10)</option>
+                          </optgroup>
+                          <optgroup label="Africa">
+                            <option value="Africa/Lagos">Africa - Lagos (GMT+1)</option>
+                            <option value="Africa/Cairo">Africa - Cairo (GMT+2)</option>
+                            <option value="Africa/Johannesburg">Africa - Johannesburg (GMT+2)</option>
+                          </optgroup>
+                          <optgroup label="Other">
+                            <option value="UTC">UTC (Coordinated Universal Time)</option>
+                          </optgroup>
+                        </select>
+                        <small class="text-muted">Current local time: <span id="currentLocalTime">--:--</span></small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <script>
+                  // Set initial timezone selection from settings
+                  document.addEventListener('DOMContentLoaded', function() {
+                    var timezone = '{{ settings.system_timezone or "UTC" }}';
+                    var select = document.getElementById('timezoneSelect');
+                    if (select && timezone) {
+                      for (var i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === timezone) {
+                          select.selectedIndex = i;
+                          break;
+                        }
+                      }
+                    }
+                  });
+                  </script>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h5 class="mb-4"><i class="bi bi-translate me-2"></i>Language Settings</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Language</label>
+                        <select name="language" class="form-select">
+                          <option value="en" {% if settings.language == 'en' %}selected{% endif %}>English</option>
+                          <option value="es" {% if settings.language == 'es' %}selected{% endif %}>Spanish</option>
+                          <option value="fr" {% if settings.language == 'fr' %}selected{% endif %}>French</option>
+                          <option value="de" {% if settings.language == 'de' %}selected{% endif %}>German</option>
+                          <option value="zh" {% if settings.language == 'zh' %}selected{% endif %}>Chinese</option>
+                          <option value="ja" {% if settings.language == 'ja' %}selected{% endif %}>Japanese</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Settings</button>
+                </form>
+              </div>
+
+              <!-- Appearance Settings -->
+              <div class="tab-pane fade {% if active_tab == 'appearance' %}show active{% endif %}" id="appearance">
+                <form method="POST">
+                  <input type="hidden" name="setting_group" value="appearance">
+                  <h5 class="mb-4"><i class="bi bi-palette me-2"></i>Theme Settings</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-12">
+                      <label class="form-label">Select Theme</label>
+                      <div class="d-flex gap-3">
+                        <button type="button" class="theme-btn light {% if settings.theme == 'light' %}active{% endif %}" onclick="selectTheme('light')">
+                          <span class="text-dark">Light</span>
+                        </button>
+                        <button type="button" class="theme-btn dark {% if settings.theme == 'dark' %}active{% endif %}" onclick="selectTheme('dark')">
+                          <span class="text-light">Dark</span>
+                        </button>
+                        <button type="button" class="theme-btn blue {% if settings.theme == 'blue' %}active{% endif %}" onclick="selectTheme('blue')">
+                          <span class="text-white">Blue</span>
+                        </button>
+                      </div>
+                      <input type="hidden" name="theme" id="themeInput" value="{{ settings.theme or 'light' }}">
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Theme</button>
+                </form>
+              </div>
+
+              <!-- Users Management -->
+              <div class="tab-pane fade {% if active_tab == 'users' %}show active{% endif %}" id="users">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <h5 class="mb-0"><i class="bi bi-people me-2"></i>Users Management</h5>
+                  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="bi bi-plus-lg me-2"></i>Add User
+                  </button>
+                </div>
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for user in users %}
+                    <tr>
+                      <td><strong>{{ user.name }}</strong></td>
+                      <td>{{ user.email }}</td>
+                      <td>
+                        <span class="role-badge bg-{% if user.role == 'admin' %}danger bg-opacity-10 text-danger{% else %}primary bg-opacity-10 text-primary{% endif %}">
+                          {{ user.role|title }}
+                        </span>
+                      </td>
+                      <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                      <td>
+                        {% if session.get('role') == 'admin' %}
+                        <form action="{{ url_for('delete_user', id=user.id) }}" method="POST" class="d-inline">
+                          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this user?')">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Backup -->
+              <div class="tab-pane fade" id="backup">
+                <h5 class="mb-4"><i class="bi bi-cloud-upload me-2"></i>Database Backup</h5>
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle me-2"></i>Create a backup of your database. The backup file will be saved to your server.
+                </div>
+                <form action="{{ url_for('backup_database') }}" method="POST">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-download me-2"></i>Create Backup Now
+                  </button>
+                </form>
+              </div>
+
+              <!-- Staff Permissions -->
+              {% if user_role == 'admin' %}
+              <div class="tab-pane fade {% if active_tab == 'permissions' %}show active{% endif %}" id="permissions">
+                <h5 class="mb-4"><i class="bi bi-shield-lock me-2"></i>Staff Button Permissions</h5>
+                <p class="text-muted mb-4">Control which action buttons are visible to staff members in the Reservations page.</p>
+                <form method="POST">
+                  <input type="hidden" name="setting_group" value="permissions">
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" name="staff_can_confirm" value="true" id="staffCanConfirm" {% if settings.staff_can_confirm == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="staffCanConfirm">
+                            <strong>Confirm Reservations</strong>
+                            <small class="d-block text-muted">Allow staff to confirm pending reservations</small>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" name="staff_can_cancel" value="true" id="staffCanCancel" {% if settings.staff_can_cancel == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="staffCanCancel">
+                            <strong>Cancel Reservations</strong>
+                            <small class="d-block text-muted">Allow staff to cancel reservations</small>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" name="staff_can_delete" value="true" id="staffCanDelete" {% if settings.staff_can_delete == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="staffCanDelete">
+                            <strong>Delete Reservations</strong>
+                            <small class="d-block text-muted">Allow staff to permanently delete reservations</small>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Permissions</button>
+                </form>
+              </div>
+              {% endif %}
+
+              <!-- Email Settings -->
+              {% if user_role == 'admin' %}
+              <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" id="email">
+                <form method="POST">
+                  <input type="hidden" name="setting_group" value="email">
+                  <h5 class="mb-4"><i class="bi bi-envelope me-2"></i>Email Settings</h5>
+                  <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>Configure SMTP settings for sending reservation confirmation and cancellation emails.
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch mb-3">
+                          <input class="form-check-input" type="checkbox" name="email_enabled" value="true" id="emailEnabled" {% if settings.email_enabled == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="emailEnabled">
+                            <strong>Enable Email Notifications</strong>
+                          </label>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">SMTP Host</label>
+                          <input type="text" name="email_smtp_host" value="{{ settings.email_smtp_host or 'smtp.gmail.com' }}" class="form-control" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">SMTP Port</label>
+                          <input type="number" name="email_smtp_port" value="{{ settings.email_smtp_port or '587' }}" class="form-control" placeholder="587">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="mb-3">
+                          <label class="form-label">SMTP Username / Email</label>
+                          <input type="text" name="email_smtp_user" value="{{ settings.email_smtp_user or '' }}" class="form-control" placeholder="your@email.com">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">SMTP Password / App Password</label>
+                          <input type="password" name="email_smtp_password" value="{{ settings.email_smtp_password or '' }}" class="form-control" placeholder="App password">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="mb-3">
+                          <label class="form-label">Sender Email</label>
+                          <input type="email" name="email_sender" value="{{ settings.email_sender or '' }}" class="form-control" placeholder="noreply@hotel.com">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Sender Name</label>
+                          <input type="text" name="email_sender_name" value="{{ settings.email_sender_name or 'DNZTech IMS' }}" class="form-control" placeholder="Hotel Name">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h5 class="mb-4 mt-4"><i class="bi bi-send me-2"></i>Email Triggers</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" name="email_confirmation" value="true" id="emailConfirmation" {% if settings.email_confirmation == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="emailConfirmation">
+                            <strong>Send on Reservation Confirmation</strong>
+                            <small class="d-block text-muted">Email guest when their reservation is confirmed</small>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card p-3">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" name="email_cancellation" value="true" id="emailCancellation" {% if settings.email_cancellation == 'true' %}checked{% endif %}>
+                          <label class="form-check-label ms-2" for="emailCancellation">
+                            <strong>Send on Reservation Cancellation</strong>
+                            <small class="d-block text-muted">Email guest when their reservation is cancelled</small>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Email Settings</button>
+                </form>
+
+                <hr class="my-4">
+                <h5 class="mb-3"><i class="bi bi-send-check me-2"></i>Test Email</h5>
+                <form action="{{ url_for('test_email') }}" method="POST" class="row g-2">
+                  <div class="col-md-6">
+                    <input type="email" name="test_email" class="form-control" placeholder="Enter email address to test" required>
+                  </div>
+                  <div class="col-md-auto">
+                    <button type="submit" class="btn btn-secondary"><i class="bi bi-paperclip me-2"></i>Send Test Email</button>
+                  </div>
+                </form>
+
+                <div class="alert alert-warning mt-4 mb-0">
+                  <h6 class="mb-2"><i class="bi bi-info-circle me-2"></i>SMTP Setup Guide</h6>
+                  <p class="mb-1"><strong>Gmail Users:</strong> Use <code>smtp.gmail.com</code> as host, port <code>587</code>, and generate an <a href="https://support.google.com/accounts/answer/185833" target="_blank">App Password</a> instead of your regular password.</p>
+                  <p class="mb-1"><strong>Outlook/Office 365:</strong> Use <code>smtp.office365.com</code> as host, port <code>587</code>.</p>
+                  <p class="mb-0"><strong>Yahoo:</strong> Use <code>smtp.mail.yahoo.com</code> as host, port <code>587</code> and generate an <a href="https://login.yahoo.com/security/" target="_blank">App Password</a>.</p>
+                </div>
+
+                <hr class="my-4">
+                <h5 class="mb-3"><i class="bi bi-pen me-2"></i>Customize Email Templates</h5>
+                <p class="text-muted mb-4">Use placeholders: <code>{guest_name}</code>, <code>{room_number}</code>, <code>{room_type}</code>, <code>{check_in}</code>, <code>{check_out}</code>, <code>{nights}</code>, <code>{total}</code>, <code>{company_name}</code>, <code>{currency_symbol}</code></p>
+
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <div class="card p-3">
+                      <h6 class="mb-3"><i class="bi bi-check-circle me-2"></i>Confirmation Email</h6>
+                      <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" name="email_confirmation_subject" value="{{ settings.email_confirmation_subject or 'Reservation Confirmed - {company_name}' }}" class="form-control" placeholder="Reservation Confirmed - {company_name}">
+                      </div>
+                      <div class="mb-0">
+                        <label class="form-label">Body (HTML)</label>
+                        <textarea name="email_confirmation_body" rows="5" class="form-control" placeholder="Leave empty to use default template">{{ settings.email_confirmation_body or '' }}</textarea>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card p-3">
+                      <h6 class="mb-3"><i class="bi bi-x-circle me-2"></i>Cancellation Email</h6>
+                      <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" name="email_cancellation_subject" value="{{ settings.email_cancellation_subject or 'Reservation Cancelled - {company_name}' }}" class="form-control" placeholder="Reservation Cancelled - {company_name}">
+                      </div>
+                      <div class="mb-0">
+                        <label class="form-label">Body (HTML)</label>
+                        <textarea name="email_cancellation_body" rows="5" class="form-control" placeholder="Leave empty to use default template">{{ settings.email_cancellation_body or '' }}</textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                    <div class="card p-3">
+                      <h6 class="mb-3"><i class="bi bi-text-indent-left me-2"></i>Email Footer (added to all emails)</h6>
+                      <textarea name="email_footer" rows="3" class="form-control" placeholder="e.g. Thank you for choosing us! Call us at +1 234 567 890">{{ settings.email_footer or '' }}</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- About / Credits -->
+              <div class="tab-pane fade {% if active_tab == 'about' %}show active{% endif %}" id="about">
+                <div class="text-center py-5">
+                  <div class="mb-4">
+                    <div class="brand-logo mx-auto" style="width: 80px; height: 80px; background: linear-gradient(135deg, #4f6fe0, #58a6ff); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                      <svg viewBox="0 0 24 24" fill="white" width="48" height="48">
+                        <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.66l-7-3.5V8.82zm9 11.16v-7.66l7-3.5v7.66l-7 3.5z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="mb-2">DNZTech IMS</h2>
+                  <p class="text-muted mb-1"><strong>Version 2.0</strong></p>
+                  <p class="text-muted mb-4">Inventory Management System</p>
+
+                  <div class="row justify-content-center mb-5">
+                    <div class="col-md-8">
+                      <div class="card p-4">
+                        <h5 class="mb-3"><i class="bi bi-person-badge me-2"></i>Developer Information</h5>
+                        <table class="table table-borderless mb-0 text-start">
+                          <tbody>
+                            <tr>
+                              <td class="fw-bold" style="width: 120px;">Name</td>
+                              <td>Denz Balili</td>
+                            </tr>
+                            <tr>
+                              <td class="fw-bold">Role</td>
+                              <td>Software Developer</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <hr class="my-3">
+
+                        <h6 class="mb-3"><i class="bi bi-tools me-2"></i>Skills & Technologies</h6>
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                          <span class="badge bg-primary">Flask</span>
+                          <span class="badge bg-primary">HTML</span>
+                          <span class="badge bg-primary">CSS</span>
+                          <span class="badge bg-primary">JavaScript</span>
+                          <span class="badge bg-primary">SQL</span>
+                          <span class="badge bg-primary">Git</span>
+                          <span class="badge bg-primary">Bootstrap</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-5">
+                    <h5 class="mb-3"><i class="bi bi-building me-2"></i>Description</h5>
+                    <p class="text-muted mx-auto" style="max-width: 600px;">
+                      DNZTech IMS (Inventory Management System) is a modern software solution designed to manage operations efficiently with a clean and user-friendly interface.
+                    </p>
+                  </div>
+
+                  <div class="alert alert-dark py-3 px-4 d-inline-block">
+                    <p class="mb-0"><i class="bi bi-c-circle me-2"></i><strong>© Credits</strong></p>
+                    <p class="mb-0 small">Developed and maintained by <strong>Denz Balili</strong>.</p>
+                    <p class="mb-0 small">All rights reserved © 2026.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add New User</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="{{ url_for('add_user') }}" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Role</label>
+              <select name="role" class="form-select">
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Add User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+      {% for category, message in messages %}
+      <div class="toast show align-items-center text-white bg-{{ category == 'success' and 'success' or 'danger' }} border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">{{ message }}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+  <script>
+    function selectTheme(theme) {
+      document.getElementById('themeInput').value = theme;
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('.theme-btn.' + theme).classList.add('active');
+    }
+  </script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      sidebar.classList.toggle('show');
+      backdrop.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function(e) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      if (window.innerWidth < 992 && !sidebar.contains(e.target) && !e.target.classList.contains('mobile-nav-btn') && sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+      }
+    });
+
+    // Update local time display based on selected timezone
+    function updateLocalTime() {
+      const select = document.getElementById('timezoneSelect');
+      const timeDisplay = document.getElementById('currentLocalTime');
+      if (!select || !timeDisplay) return;
+
+      const timezone = select.value;
+      try {
+        const now = new Date();
+        const options = {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        };
+        const formatter = new Intl.DateTimeFormat('en-US', options);
+        timeDisplay.textContent = formatter.format(now);
+      } catch (e) {
+        timeDisplay.textContent = 'Invalid timezone';
+      }
+    }
+
+    // Update time on page load and when timezone changes
+    updateLocalTime();
+    document.getElementById('timezoneSelect').addEventListener('change', updateLocalTime);
+    setInterval(updateLocalTime, 1000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservations</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/sidebar-brand.css') }}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <style>
+    {% if system_settings.theme == 'dark' %}
+    :root {
+      --sidebar-bg: #0d1117;
+      --sidebar-hover: #161b22;
+      --sidebar-active: #21262d;
+      --primary: #58a6ff;
+      --primary-dark: #1f6feb;
+    }
+    body { background: #0d1117; color: #c9d1d9; }
+    .card { background: #161b22; color: #c9d1d9; }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1020; background: #161b22; color: #c9d1d9; }
+    {% elif system_settings.theme == 'blue' %}
+    :root {
+      --sidebar-bg: #1a365d;
+      --sidebar-hover: #2c5282;
+      --sidebar-active: #2b6cb0;
+      --primary: #4299e1;
+      --primary-dark: #3182ce;
+    }
+    {% else %}
+    :root {
+      --sidebar-bg: #1e2a4a;
+      --sidebar-hover: #2d3e6d;
+      --sidebar-active: #3b5998;
+      --primary: #4f6fe0;
+      --primary-dark: #3a5299;
+    }
+    {% endif %}
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f5f7fa;
+    }
+    .sidebar {
+      min-height: 100vh;
+      background: var(--sidebar-bg);
+      position: fixed;
+      width: 240px;
+    }
+    .sidebar .brand {
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .sidebar .brand-logo {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #4f6fe0, #58a6ff);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+      flex-shrink: 0;
+    }
+    .sidebar .brand-logo svg {
+      width: 40px;
+      height: 40px;
+    }
+    .sidebar .brand-img {
+      width: auto;
+      max-width: 160px;
+      height: 70px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4f6fe0, #58a6ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 8px 10px;
+    }
+    .sidebar .brand-img img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    .sidebar .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar .brand h4 {
+      color: #fff;
+      font-weight: 800;
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+    .sidebar .brand span {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.7);
+      padding: 0.9rem 1.5rem;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .sidebar .nav-link:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+    }
+    .sidebar .nav-link.active {
+      background: var(--sidebar-active);
+      color: #fff;
+      border-left-color: var(--primary);
+    }
+    .sidebar .nav-link i { width: 24px; }
+    .main-content { margin-left: 240px; min-height: 100vh; }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+      background: #fff;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+    }
+    .top-bar h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin: 0;
+      color: #2c3e50;
+    }
+    .card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      background: #fff;
+    }
+    .table thead th {
+      border-bottom: 2px solid #e9ecef;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      color: #6c757d;
+      background: #f8f9fa;
+    }
+    .table td { vertical-align: middle; }
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .modal-content { border-radius: 16px; border: none; overflow: hidden; }
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      padding: 1.5rem;
+      border: none;
+    }
+    .modal-xl { max-width: 98vw; width: 1100px; }
+    .bg-gradient-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+    .bg-gradient-light {
+      background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+    }
+    .modal-title { font-weight: 600; }
+    .modal-body { padding: 2rem; }
+    .modal-footer { border: none; padding: 0 2rem 1.5rem; }
+    .form-label {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 0.5rem;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      border: 1px solid #dee2e6;
+    }
+    .form-control-lg {
+      padding: 0.9rem 1rem;
+      font-size: 1rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 111, 224, 0.1);
+    }
+    .cost-display {
+      background: linear-gradient(135deg, var(--primary), #6b8dd6);
+      color: #fff;
+      padding: 1.2rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .cost-display .label { font-size: 0.85rem; opacity: 0.9; }
+    .cost-display .amount { font-size: 2rem; font-weight: 700; }
+    .cost-display .breakdown { font-size: 0.8rem; opacity: 0.8; margin-top: 0.3rem; }
+    .badge-status {
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.8rem;
+    }
+    .btn-action {
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+    .search-box {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+    .search-box input {
+      padding-left: 2.5rem;
+      border-radius: 10px;
+      border: 1px solid #dee2e6;
+      padding: 0.7rem 1rem;
+      width: 100%;
+      max-width: 300px;
+    }
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 111, 224, 0.1);
+      outline: none;
+    }
+    .view-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .view-toggle button {
+      padding: 0.5rem 1rem;
+      border: 1px solid #dee2e6;
+      background: #fff;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .view-toggle button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .view-toggle button:hover:not(.active) {
+      background: #f8f9fa;
+    }
+    #calendar {
+      max-width: 100%;
+      padding: 1rem;
+    }
+    .fc-event {
+      border-radius: 6px !important;
+      padding: 3px 6px !important;
+      font-size: 0.75rem !important;
+      border: none !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .fc-toolbar-title {
+      font-size: 1.3rem !important;
+      font-weight: 600 !important;
+      color: #2c3e50;
+    }
+    .fc-button {
+      border-radius: 8px !important;
+      padding: 0.4rem 1rem !important;
+      font-size: 0.85rem !important;
+      font-weight: 500 !important;
+    }
+    .fc-button-primary {
+      background: var(--primary) !important;
+      border: none !important;
+    }
+    .fc-button-primary:hover {
+      background: var(--primary-dark) !important;
+    }
+    .fc-daygrid-day {
+      transition: background 0.2s;
+    }
+    .fc-daygrid-day:hover {
+      background: rgba(79, 111, 224, 0.05);
+    }
+    .fc-daygrid-day-number {
+      font-weight: 500;
+      color: #495057;
+    }
+    .fc-col-header-cell {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+      padding: 0.75rem 0;
+    }
+    .legend {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 1rem;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #495057;
+    }
+    .legend-color {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .fc-event-confirmed { background: #198754 !important; }
+    .fc-event-pending { background: #ffc107 !important; }
+    .fc-event-cancelled { background: #dc3545 !important; }
+    .fc-event-checkedin { background: #0dcaf0 !important; }
+    .detail-item {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+    }
+    .detail-item label {
+      display: block;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #detailModalHeader {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+    }
+    .fc-day-available {
+      background: rgba(32, 201, 151, 0.15) !important;
+    }
+    .fc-day-available .fc-daygrid-day-number {
+      color: #20c997;
+      font-weight: 600;
+    }
+    .fc-day-available::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      background: #20c997;
+      border-radius: 50%;
+    }
+    /* Calendar-based selection styles */
+    #modalCalendar {
+      height: 420px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    #modalCalendar .fc-toolbar {
+      padding: 0.75rem;
+      background: #f8f9fa;
+    }
+    #modalCalendar .fc-toolbar-title {
+      font-size: 1.1rem !important;
+    }
+    #modalCalendar .fc-button {
+      padding: 0.4rem 0.8rem !important;
+      font-size: 0.85rem !important;
+      border-radius: 8px !important;
+    }
+    #modalCalendar .fc-daygrid-day {
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    #modalCalendar .fc-daygrid-day:hover {
+      background: rgba(79, 111, 224, 0.08);
+    }
+    #modalCalendar .fc-daygrid-day-number {
+      font-size: 0.85rem;
+      padding: 6px 8px;
+    }
+    #modalCalendar .fc-event {
+      border-radius: 4px !important;
+      font-size: 0.7rem !important;
+      padding: 2px 4px !important;
+    }
+    #modalCalendar .fc-col-header-cell {
+      padding: 10px 0;
+      background: #f8f9fa;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    #modalCalendar .fc-day-disabled {
+      background: #f5f5f5 !important;
+      cursor: not-allowed !important;
+      opacity: 0.5;
+    }
+    #modalCalendar .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-number {
+      color: #ccc;
+    }
+    .selected-dates-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+    }
+    .date-box {
+      border: 1px solid #dee2e6;
+      transition: all 0.2s;
+    }
+    .selected-dates-card .fw-semibold {
+      font-size: 0.95rem;
+      color: #2c3e50;
+    }
+    .nights-count .badge {
+      font-size: 0.9rem;
+      padding: 0.4rem 1rem;
+    }
+    .instructions i {
+      opacity: 0.7;
+    }
+    .modal-legend {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.7rem;
+      color: #6c757d;
+      vertical-align: middle;
+    }
+    .modal-legend .legend-dot {
+      width: 8px;
+      height: 8px;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      margin-right: 3px;
+      vertical-align: middle;
+    }
+    .date-range-selected {
+      background: rgba(79, 111, 224, 0.2) !important;
+    }
+    .date-range-selected .fc-daygrid-day-number {
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .fc-day-blocked {
+      background: rgba(220, 53, 69, 0.15) !important;
+    }
+    .fc-day-blocked .fc-daygrid-day-number {
+      color: #dc3545;
+    }
+    /* Calendar status badges on dates */
+    .calendar-status-badge {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .calendar-status-badge.pending { background: #ffc107; }
+    .calendar-status-badge.confirmed { background: #dc3545; }
+    .calendar-status-badge.cancelled { background: #6c757d; }
+    .calendar-status-badge.checked-in { background: #0dcaf0; }
+    .calendar-status-badge.available { background: #20c997; }
+    /* Date status indicator dot */
+    .date-status-dot {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      z-index: 5;
+    }
+    .date-status-dot.pending { background: #ffc107; }
+    .date-status-dot.confirmed { background: #dc3545; }
+    .date-status-dot.cancelled { background: #6c757d; }
+    .date-status-dot.checked-in { background: #0dcaf0; }
+    /* Main calendar day cell improvements */
+    #calendar .fc-daygrid-day {
+      position: relative;
+    }
+    #calendar .fc-daygrid-day .fc-daygrid-day-number {
+      position: relative;
+      z-index: 2;
+    }
+    #calendar .fc-daygrid-day.has-status .fc-daygrid-day-number {
+      padding-right: 18px;
+    }
+    #calendar .fc-daygrid-day.has-event::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      z-index: 6;
+    }
+    /* Today highlight */
+    .fc-day-today {
+      background: rgba(79, 111, 224, 0.1) !important;
+    }
+    .fc-day-today .fc-daygrid-day-number {
+      background: var(--primary);
+      color: #fff !important;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    /* Tooltip styles */
+    .calendar-tooltip {
+      position: absolute;
+      z-index: 9999;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      padding: 12px 16px;
+      min-width: 200px;
+      max-width: 280px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .calendar-tooltip.visible {
+      opacity: 1;
+    }
+    .calendar-tooltip .tooltip-header {
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .calendar-tooltip .tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 3px 0;
+    }
+    .calendar-tooltip .tooltip-label {
+      color: #6c757d;
+    }
+    .calendar-tooltip .tooltip-value {
+      font-weight: 500;
+    }
+    .calendar-tooltip .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .status-available { background: #20c997; color: #fff; }
+    .status-pending { background: #ffc107; color: #000; }
+    .status-confirmed, .status-reserved { background: #dc3545; color: #fff; }
+    .status-cancelled { background: #6c757d; color: #fff; }
+    .status-checkedin { background: #0dcaf0; color: #fff; }
+    /* Date selection styles */
+    .date-selection-hint {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 100;
+    }
+    .fc-day-available-date {
+      position: relative;
+    }
+    .fc-day-available-date::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      background: #20c997;
+      border-radius: 50%;
+    }
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1050;
+        width: 260px !important;
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+      }
+      .sidebar-backdrop.show {
+        display: block;
+      }
+      .main-content {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+      .mobile-nav-btn {
+        display: flex !important;
+      }
+      .top-bar {
+        padding: 1rem !important;
+      }
+      .top-bar h1 {
+        font-size: 1.3rem;
+      }
+    }
+    @media (max-width: 767px) {
+      .table-responsive {
+        font-size: 0.85rem;
+      }
+      .card-body {
+        padding: 1rem !important;
+      }
+    }
+    .mobile-nav-btn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1030;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table {
+      min-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Backdrop for Mobile -->
+  <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <!-- Mobile Navigation Button -->
+  <button class="mobile-nav-btn" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div class="container-fluid p-0">
+    <div class="row g-0">
+      <!-- Sidebar -->
+      <nav class="col-md-2 sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-logo">
+            {% if system_settings.logo_icon == 'hotel' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+            </svg>
+            {% elif system_settings.logo_icon == 'grid' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+            </svg>
+            {% elif system_settings.logo_icon == 'briefcase' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+            </svg>
+            {% else %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.66l-7-3.5V8.82zm9 11.16v-7.66l7-3.5v7.66l-7 3.5z"/>
+            </svg>
+            {% endif %}
+          </div>
+          <div class="brand-text">
+            <h4>DNZTech</h4>
+            <span>Management System</span>
+          </div>
+        </div>
+        <ul class="nav flex-column mt-3">
+          <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="{{ url_for('rooms') }}" class="nav-link"><i class="bi bi-door-open me-2"></i>Rooms</a></li>
+          <li class="nav-item"><a href="{{ url_for('reservations') }}" class="nav-link active"><i class="bi bi-calendar-check me-2"></i>Reservations</a></li>
+          <li class="nav-item"><a href="{{ url_for('checkins') }}" class="nav-link"><i class="bi bi-box-arrow-in-right me-2"></i>Check-ins</a></li>
+          <li class="nav-item"><a href="{{ url_for('foods') }}" class="nav-link"><i class="bi bi-cup-hot-fill me-2"></i>Foods</a></li>
+          <li class="nav-item"><a href="{{ url_for('food_orders') }}" class="nav-link"><i class="bi bi-receipt me-2"></i>Food Orders</a></li>
+          <li class="nav-item"><a href="{{ url_for('addon_orders') }}" class="nav-link"><i class="bi bi-plus-circle me-2"></i>Addon Orders</a></li>
+          <li class="nav-item"><a href="{{ url_for('addons') }}" class="nav-link"><i class="bi bi-puzzle me-2"></i>Add-ons</a></li>
+          <li class="nav-item"><a href="{{ url_for('payments') }}" class="nav-link"><i class="bi bi-credit-card me-2"></i>Payments</a></li>
+          <li class="nav-item"><a href="{{ url_for('settings') }}" class="nav-link"><i class="bi bi-gear me-2"></i>Settings</a></li>
+          <li class="nav-item"><a href="{{ url_for('reports') }}" class="nav-link"><i class="bi bi-file-earmark-bar-graph me-2"></i>Reports</a></li>
+          <li class="nav-item mt-5"><a href="{{ url_for('logout') }}" class="nav-link"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="col-md-10 main-content">
+        <div class="top-bar">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="bi bi-calendar-check me-2"></i>Reservations</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReservationModal">
+              <i class="bi bi-plus-lg me-2"></i>New Reservation
+            </button>
+          </div>
+        </div>
+
+        <div class="card m-4">
+          <div class="card-body p-4">
+            <!-- View Toggle -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+              <div class="view-toggle">
+                <button class="active" onclick="switchView('calendar')" id="calendarBtn">
+                  <i class="bi bi-calendar3 me-1"></i> Calendar
+                </button>
+                <button onclick="switchView('table')" id="tableBtn">
+                  <i class="bi bi-table me-1"></i> Table
+                </button>
+              </div>
+              <div class="legend" id="legend">
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #20c997;"></div>
+                  <span>Available</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #ffc107;"></div>
+                  <span>Pending</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #dc3545;"></div>
+                  <span>Confirmed/Reserved</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #6c757d;"></div>
+                  <span>Cancelled</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarView">
+              <div id="calendar"></div>
+            </div>
+
+            <!-- Table View (hidden by default) -->
+            <div id="tableView" style="display: none;">
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" placeholder="Search reservations..." onkeyup="filterTable()">
+              </div>
+              <table class="table table-hover" id="dataTable">
+                <thead>
+                  <tr>
+                    <th>Guest</th>
+                    <th>Contact</th>
+                    <th>Room</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Total Cost</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for res in reservations %}
+                  <tr>
+                    <td><strong>{{ res.guest_name }}</strong></td>
+                    <td>
+                      <div>{{ res.email }}</div>
+                      <small class="text-muted">{{ res.phone or '-' }}</small>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">{{ res.room_number }}</div>
+                      <small class="text-muted">{{ res.type|title }}</small>
+                    </td>
+                    <td>{{ res.check_in }}</td>
+                    <td>{{ res.check_out }}</td>
+                    <td>
+                      {% if res.price and res.check_in and res.check_out %}
+                        {{ system_settings.currency_symbol or '$' }}{{ ((res.check_out - res.check_in).days * res.price)|round|int }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge badge-status bg-{% if res.status == 'confirmed' %}success{% elif res.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                        {{ res.status|title }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex gap-2">
+                        {% if user_role == 'admin' or (user_role == 'staff' and system_settings.get('staff_can_delete', 'false') == 'true') %}
+                        <form action="{{ url_for('delete_reservation', id=res.id) }}" method="POST">
+                          <button type="submit" class="btn btn-dark btn-action" onclick="return confirm('Delete reservation?')"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                        {% if res.status == 'pending' and (user_role == 'admin' or (user_role == 'staff' and system_settings.get('staff_can_confirm', 'false') == 'true')) %}
+                        <form action="{{ url_for('confirm_reservation', id=res.id) }}" method="POST">
+                          <button type="submit" class="btn btn-success btn-action">Confirm</button>
+                        </form>
+                        {% endif %}
+                        {% if res.status != 'cancelled' and (user_role == 'admin' or (user_role == 'staff' and system_settings.get('staff_can_cancel', 'false') == 'true')) %}
+                        <form action="{{ url_for('cancel_reservation', id=res.id) }}" method="POST">
+                          <button type="submit" class="btn btn-danger btn-action" onclick="return confirm('Cancel reservation?')">Cancel</button>
+                        </form>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add Reservation Modal -->
+  <div class="modal fade" id="addReservationModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: none;">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 1.5rem;">
+          <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>New Reservation</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="{{ url_for('add_reservation') }}" method="POST" id="reservationForm">
+          <input type="hidden" name="check_in" id="checkIn" required>
+          <input type="hidden" name="check_out" id="checkOut" required>
+          <div class="modal-body p-4">
+            <div class="row g-4">
+              <!-- Left Column: Guest Info & Room -->
+              <div class="col-lg-5">
+                <div class="card border-0 bg-light mb-3">
+                  <div class="card-body p-3">
+                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                      <i class="bi bi-person me-1"></i>Guest Information
+                    </h6>
+
+                    <div class="mb-3">
+                      <label class="form-label small fw-semibold">Guest Name *</label>
+                      <input type="text" name="guest_name" class="form-control" required placeholder="Enter guest name">
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label small fw-semibold">Email *</label>
+                      <input type="email" name="email" class="form-control" required placeholder="guest@email.com">
+                    </div>
+
+                    <div class="mb-0">
+                      <label class="form-label small fw-semibold">Phone</label>
+                      <input type="text" name="phone" class="form-control" placeholder="+1 234 567 8900">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card border-0">
+                  <div class="card-body p-3">
+                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                      <i class="bi bi-door-open me-1"></i>Room Selection
+                    </h6>
+
+                    <div class="mb-3">
+                      <label class="form-label small fw-semibold">Select Room *</label>
+                      <select name="room_id" id="roomSelect" class="form-select" required onchange="onRoomSelect()">
+                        <option value="">-- Choose Room --</option>
+                        {% for room in available_rooms %}
+                        <option value="{{ room.id }}" data-price="{{ room.price }}" data-type="{{ room.type }}" data-status="{{ room.status }}">
+                          {{ room.room_number }} - {{ room.type|title }} ({{ system_settings.currency_symbol or '$' }}{{ room.price }}/night)
+                        </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Selected Dates Card -->
+                    <div class="selected-dates-card p-3 rounded-3 bg-white border">
+                      <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-semibold small"><i class="bi bi-calendar-range me-1 text-primary"></i>Selected Dates</span>
+                        <span class="badge bg-primary rounded-pill" id="nightsCount">0 nights</span>
+                      </div>
+                      <div class="row g-2 text-center">
+                        <div class="col-6">
+                          <div class="text-muted small text-uppercase">Check-in</div>
+                          <div class="fw-bold small" id="selectedCheckIn">--</div>
+                        </div>
+                        <div class="col-6">
+                          <div class="text-muted small text-uppercase">Check-out</div>
+                          <div class="fw-bold small" id="selectedCheckOut">--</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Downpayment Field - Only show when enabled in settings -->
+                    {% if system_settings.require_downpayment == 'true' %}
+                    <div class="mb-0 mt-3" id="downpaymentFieldContainer">
+                      <label class="form-label small fw-semibold">
+                        Downpayment <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text">{{ system_settings.currency_symbol or '$' }}</span>
+                        <input type="number" name="downpayment_amount" id="downpaymentInput" class="form-control" placeholder="Enter downpayment amount" min="0" step="0.01" oninput="calculatePaymentSummary()">
+                      </div>
+                      <div class="invalid-feedback" id="downpaymentError" style="display: none;"></div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Calendar & Payment -->
+              <div class="col-lg-7">
+                <h6 class="text-muted text-uppercase mb-3" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                  <i class="bi bi-calendar3 me-1"></i>Select Dates
+                  <span class="float-end">
+                    <span class="me-2"><span class="legend-dot" style="background:#20c997;"></span> <small>Available</small></span>
+                    <span class="me-2"><span class="legend-dot" style="background:#ffc107;"></span> <small>Pending</small></span>
+                    <span class="me-0"><span class="legend-dot" style="background:#dc3545;"></span> <small>Reserved</small></span>
+                  </span>
+                </h6>
+
+                <div id="modalCalendar" class="mb-3 border rounded-3 bg-white" style="min-height: 300px;"></div>
+
+                <!-- Payment Summary Card -->
+                <div class="card border-primary">
+                  <div class="card-body p-3">
+                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 0.7rem;">
+                      <i class="bi bi-receipt me-1"></i>Payment Summary
+                    </h6>
+                    <div class="row text-center">
+                      <div class="col-4">
+                        <div class="text-muted small">Room Rate</div>
+                        <div class="fw-bold" id="summaryRoomRate">{{ system_settings.currency_symbol or '$' }}0.00<span class="text-muted">/night</span></div>
+                      </div>
+                      <div class="col-4">
+                        <div class="text-muted small"></div>
+                        <div class="fw-bold" id="summaryNights"></div>
+                      </div>
+                      <div class="col-4">
+                        <div class="text-muted small">Total Price</div>
+                        <div class="fw-bold text-primary fs-5" id="summaryTotal">{{ system_settings.currency_symbol or '$' }}0.00</div>
+                      </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row text-center" id="downpaymentSummaryRow" style="display: none;">
+                      <div class="col-4">
+                        <div class="text-muted small">Downpayment</div>
+                        <div class="fw-bold text-success" id="summaryDownpayment">-{{ system_settings.currency_symbol or '$' }}0.00</div>
+                      </div>
+                      <div class="col-4">
+                        <div class="text-muted small">Balance Due</div>
+                        <div class="fw-bold text-danger fs-5" id="summaryBalance">{{ system_settings.currency_symbol or '$' }}0.00</div>
+                      </div>
+                      <div class="col-4">
+                        <div class="text-muted small">Status</div>
+                        <div class="fw-bold" id="paymentStatusBadge"><span class="badge bg-secondary">Unpaid</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+              <i class="bi bi-check-lg me-2"></i>Create Reservation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reservation Detail Modal -->
+  <div class="modal fade" id="reservationDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: none; overflow: hidden;">
+        <div class="modal-header" id="detailModalHeader" style="padding: 1.5rem;">
+          <h5 class="modal-title"><i class="bi bi-calendar-check me-2"></i>Reservation Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Guest Name</label>
+                <div class="fw-semibold" id="detailGuest"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Room</label>
+                <div class="fw-semibold" id="detailRoom"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Email</label>
+                <div class="fw-semibold" id="detailEmail"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Phone</label>
+                <div class="fw-semibold" id="detailPhone"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Check-in</label>
+                <div class="fw-semibold" id="detailCheckin"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Check-out</label>
+                <div class="fw-semibold" id="detailCheckout"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Nights</label>
+                <div class="fw-semibold" id="detailNights"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Price / Night</label>
+                <div class="fw-semibold" id="detailPrice"></div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="detail-item">
+                <label class="text-muted small">Status</label>
+                <div id="detailStatus"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Downpayment</label>
+                <div class="fw-semibold" id="detailDownpayment"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="detail-item">
+                <label class="text-muted small">Balance</label>
+                <div class="fw-semibold" id="detailBalance"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <!-- Tooltip element -->
+  <div id="calendarTooltip" class="calendar-tooltip"></div>
+  <script>
+    // Reservations data for calendar - force fresh data
+    const reservations = {{ reservations|tojson }};
+    const rooms = {{ rooms|tojson }};
+    const activeCheckins = {{ active_checkins|tojson }};
+    const currency = '{{ system_settings.currency_symbol or "$" }}';
+
+    console.log('Reservations loaded:', reservations.length);
+    console.log('Active check-ins:', activeCheckins.length);
+
+    // Check if a room is available for given dates (using string comparison)
+    function isRoomAvailable(roomId, checkIn, checkOut) {
+      const checkInStr = getDateString(checkIn);
+      const checkOutStr = getDateString(checkOut);
+
+      console.log('[isRoomAvailable] Checking room', roomId, 'for', checkInStr, 'to', checkOutStr);
+
+      // Only CONFIRMED reservations block new bookings (pending/cancelled don't block)
+      for (const res of reservations) {
+        if (res.room_id !== roomId || res.status !== 'confirmed') continue;
+
+        const resStart = getDateString(res.check_in);
+        const resEnd = getDateString(res.check_out);
+
+        // Check for overlap: overlap if newStart < existingEnd AND newEnd > existingStart
+        if (checkInStr < resEnd && checkOutStr > resStart) {
+          console.log('[isRoomAvailable] BLOCKED by reservation:', res.guest_name);
+          return false;
+        }
+      }
+
+      // Check active check-ins (these always block)
+      for (const checkin of activeCheckins) {
+        if (checkin.room_id !== roomId) continue;
+
+        const ciTime = getDateString(checkin.check_in_time);
+        const coTime = checkin.check_out_time ? getDateString(checkin.check_out_time) : getTodayString();
+
+        if (checkInStr < coTime && checkOutStr > ciTime) {
+          console.log('[isRoomAvailable] BLOCKED by check-in:', checkin.guest_name);
+          return false;
+        }
+      }
+
+      console.log('[isRoomAvailable] Room is AVAILABLE');
+      return true;
+    }
+
+    // Helper to compare date strings in local time
+    function compareDateStrings(dateStr1, dateStr2) {
+      const d1 = toLocalDate(dateStr1);
+      const d2 = toLocalDate(dateStr2);
+      return d1 - d2;
+    }
+
+    // Filter rooms based on selected dates and room status
+    function filterAvailableRooms() {
+      const checkIn = document.getElementById('checkIn').value;
+      const checkOut = document.getElementById('checkOut').value;
+      const roomSelect = document.getElementById('roomSelect');
+      const selectedValue = roomSelect.value;
+
+      // Clear existing options except the default
+      roomSelect.innerHTML = '<option value="">-- Select Room --</option>';
+
+      rooms.forEach(room => {
+        // Exclude rooms with 'reserved' status (has confirmed reservation)
+        if (room.status === 'reserved') return;
+
+        // If dates selected, also check for date conflicts with confirmed reservations
+        if (!checkIn || !checkOut || isRoomAvailable(room.id, checkIn, checkOut)) {
+          const option = document.createElement('option');
+          option.value = room.id;
+          option.textContent = room.room_number + ' - ' + room.type.charAt(0).toUpperCase() + room.type.slice(1) + ' (' + currency + room.price.toLocaleString() + '/night)';
+          option.dataset.price = room.price;
+          option.dataset.type = room.type;
+          roomSelect.appendChild(option);
+        }
+      });
+
+      // Restore selected value if still valid
+      if (selectedValue) {
+        const option = roomSelect.querySelector('option[value="' + selectedValue + '"]');
+        if (option) roomSelect.value = selectedValue;
+      }
+
+      calculateCost();
+
+      // Refresh calendar to update available day highlighting
+      if (calendar) {
+        calendar.render();
+      }
+    }
+
+    // Modal calendar variable
+    let modalCalendar = null;
+    let selectedStartDate = null;
+    let selectedEndDate = null;
+
+    // Get events for modal calendar filtered by selected room
+    function getModalCalendarEvents(roomId) {
+      const events = [];
+
+      if (!roomId) {
+        // Show all reservations if no room selected (skip completed)
+        reservations.forEach(res => {
+          if (!res.check_in || !res.check_out) return;
+          if (res.status === 'completed') return; // Skip completed stays
+
+          let color = '#ffc107'; // pending - yellow
+          if (res.status === 'confirmed') color = '#dc3545'; // red - Confirmed/Reserved
+          else if (res.status === 'cancelled') color = '#6c757d'; // gray
+
+          events.push({
+            title: res.guest_name + ' - Room ' + res.room_number,
+            start: res.check_in,
+            end: res.check_out,
+            backgroundColor: color,
+            borderColor: color,
+            textColor: res.status === 'cancelled' ? '#fff' : '#000',
+            extendedProps: { status: res.status, roomId: res.room_id }
+          });
+        });
+      } else {
+        // Filter by room (skip completed reservations)
+        reservations.forEach(res => {
+          if (res.room_id !== roomId || !res.check_in || !res.check_out) return;
+          if (res.status === 'completed') return; // Skip completed stays
+
+          let color = '#ffc107'; // pending - yellow
+          let textColor = '#000';
+          if (res.status === 'confirmed') {
+            color = '#dc3545'; // red - Confirmed/Reserved per requirements
+            textColor = '#fff';
+          } else if (res.status === 'cancelled') {
+            color = '#6c757d'; // gray
+            textColor = '#fff';
+          }
+
+          events.push({
+            title: res.guest_name + ' (' + res.status.charAt(0).toUpperCase() + res.status.slice(1) + ')',
+            start: res.check_in,
+            end: res.check_out,
+            backgroundColor: color,
+            borderColor: color,
+            textColor: textColor,
+            display: 'background',
+            extendedProps: { status: res.status }
+          });
+        });
+
+        // Add active check-ins for this room
+        activeCheckins.forEach(checkin => {
+          if (checkin.room_id !== roomId) return;
+          const checkInDate = new Date(checkin.check_in_time);
+          const checkOutDate = checkin.check_out_time ? new Date(checkin.check_out_time) : new Date();
+
+          events.push({
+            title: checkin.guest_name + ' (Checked-in)',
+            start: checkInDate.toISOString().split('T')[0],
+            end: checkOutDate.toISOString().split('T')[0] || null,
+            backgroundColor: '#0dcaf0',
+            borderColor: '#0dcaf0',
+            textColor: '#fff',
+            display: 'background',
+            extendedProps: { status: 'checked-in' }
+          });
+        });
+      }
+
+      return events;
+    }
+
+    // Normalize date to Date object with time stripped (local time midnight)
+    // Note: getDateString() is preferred for string comparison to avoid timezone issues
+    function toLocalDate(date) {
+      if (typeof date === 'string') {
+        // Parse YYYY-MM-DD as local date (no timezone conversion)
+        const parts = date.split('-');
+        if (parts.length === 3) {
+          const d = new Date();
+          d.setFullYear(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          d.setHours(0, 0, 0, 0);
+          return d;
+        }
+      }
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    // Helper to parse date from FullCalendar info.start (which may be UTC midnight)
+    function parseDateInput(dateInput) {
+      if (!dateInput) return null;
+      // If it's a string in YYYY-MM-DD format, parse as local date directly
+      if (typeof dateInput === 'string' && dateInput.includes('-')) {
+        const parts = dateInput.split('-');
+        if (parts.length === 3) {
+          const d = new Date();
+          d.setFullYear(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          d.setHours(0, 0, 0, 0);
+          return d;
+        }
+      }
+      // Otherwise treat as Date object
+      return toLocalDate(dateInput);
+    }
+
+    // Get today's date as YYYY-MM-DD string in LOCAL time (not UTC)
+    // This avoids timezone issues where UTC midnight could be "yesterday" locally
+    function getTodayString() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return year + '-' + month + '-' + day;
+    }
+
+    // Get date string YYYY-MM-DD from Date object or string
+    function getDateString(dateInput) {
+      if (!dateInput) return '';
+      if (typeof dateInput === 'string') {
+        // If already YYYY-MM-DD format, return as-is
+        if (dateInput.includes('-') && dateInput.length === 10) {
+          return dateInput;
+        }
+        // Otherwise parse as Date
+        dateInput = new Date(dateInput);
+      }
+      const year = dateInput.getFullYear();
+      const month = String(dateInput.getMonth() + 1).padStart(2, '0');
+      const day = String(dateInput.getDate()).padStart(2, '0');
+      return year + '-' + month + '-' + day;
+    }
+
+    // Check if date string is valid and not empty
+    function isValidDateString(dateStr) {
+      return dateStr && dateStr.length === 10 && dateStr.match(/^\d{4}-\d{2}-\d{2}$/);
+    }
+
+    // Get today's date at local midnight
+    function getTodayLocal() {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    }
+
+    // Check if a date range has any confirmed/reserved conflicts for a room
+    // Works with both Date objects and YYYY-MM-DD string dates
+    function hasConflict(roomId, startDate, endDate) {
+      // Convert to string dates for consistent comparison (avoids timezone issues)
+      const start = getDateString(startDate);
+      const end = getDateString(endDate);
+
+      console.log('[hasConflict] Checking conflict for room', roomId);
+      console.log('[hasConflict] Date range:', start, 'to', end);
+
+      // Check reservations for this room (only confirmed blocks new bookings)
+      for (const res of reservations) {
+        if (res.room_id !== roomId || res.status !== 'confirmed') continue;
+        if (!res.check_in || !res.check_out) continue;
+
+        const resStart = getDateString(res.check_in);
+        const resEnd = getDateString(res.check_out);
+
+        console.log('[hasConflict] Comparing with reservation:', res.guest_name, resStart, 'to', resEnd);
+
+        // Check overlap: ranges overlap if start < existingEnd AND end > existingStart
+        // Using string comparison works correctly for YYYY-MM-DD format
+        if (start < resEnd && end > resStart) {
+          console.log('[hasConflict] OVERLAP DETECTED!');
+          return true;
+        }
+      }
+
+      // Check active check-ins (these always block)
+      for (const checkin of activeCheckins) {
+        if (checkin.room_id !== roomId) continue;
+
+        const checkInTime = getDateString(checkin.check_in_time);
+        const checkOutTime = checkin.check_out_time ? getDateString(checkin.check_out_time) : getTodayString();
+
+        console.log('[hasConflict] Comparing with check-in:', checkin.guest_name, checkInTime, 'to', checkOutTime);
+
+        if (start < checkOutTime && end > checkInTime) {
+          console.log('[hasConflict] CHECK-IN OVERLAP DETECTED!');
+          return true;
+        }
+      }
+
+      console.log('[hasConflict] No conflict found');
+      return false;
+    }
+
+    // Get all blocked date ranges for a room (for visual highlighting)
+    // Returns STRING dates (YYYY-MM-DD) for consistent comparison
+    function getBlockedRanges(roomId) {
+      const blocked = [];
+
+      // Block confirmed reservations
+      for (const res of reservations) {
+        if (res.room_id !== roomId || res.status !== 'confirmed') continue;
+        if (!res.check_in || !res.check_out) continue;
+
+        blocked.push({
+          start: getDateString(res.check_in),
+          end: getDateString(res.check_out),
+          status: 'confirmed'
+        });
+      }
+
+      // Block active check-ins
+      for (const checkin of activeCheckins) {
+        if (checkin.room_id !== roomId) continue;
+
+        const checkInTime = getDateString(checkin.check_in_time);
+        const checkOutTime = checkin.check_out_time ? getDateString(checkin.check_out_time) : getTodayString();
+
+        blocked.push({
+          start: checkInTime,
+          end: checkOutTime,
+          status: 'checked-in'
+        });
+      }
+
+      return blocked;
+    }
+
+    // Update the selected dates display and hidden inputs
+    function updateSelectedDates() {
+      console.log('[updateSelectedDates] CALLED');
+      console.log('[updateSelectedDates] selectedStartDate:', selectedStartDate, 'type:', typeof selectedStartDate);
+      console.log('[updateSelectedDates] selectedEndDate:', selectedEndDate, 'type:', typeof selectedEndDate);
+
+      const checkInInput = document.getElementById('checkIn');
+      const checkOutInput = document.getElementById('checkOut');
+      const selectedCheckIn = document.getElementById('selectedCheckIn');
+      const selectedCheckOut = document.getElementById('selectedCheckOut');
+      const nightsCount = document.getElementById('nightsCount');
+      const submitBtn = document.getElementById('submitBtn');
+      const roomSelect = document.getElementById('roomSelect');
+
+      if (selectedStartDate && selectedEndDate) {
+        const checkInStr = getDateString(selectedStartDate);
+        const checkOutStr = getDateString(selectedEndDate);
+        console.log('[updateSelectedDates] Setting inputs:', checkInStr, checkOutStr);
+
+        checkInInput.value = checkInStr;
+        checkOutInput.value = checkOutStr;
+
+        selectedCheckIn.textContent = selectedStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        selectedCheckOut.textContent = selectedEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        const nights = Math.ceil((selectedEndDate - selectedStartDate) / (1000 * 60 * 60 * 24));
+        nightsCount.textContent = nights + (nights === 1 ? ' night' : ' nights');
+
+        // Calculate and update payment summary
+        calculatePaymentSummary();
+
+        // Enable submit if room selected and no conflict
+        const roomId = roomSelect.value ? parseInt(roomSelect.value) : null;
+        if (roomId) {
+          submitBtn.disabled = hasConflict(roomId, selectedStartDate, selectedEndDate);
+        } else {
+          submitBtn.disabled = true;
+        }
+      } else {
+        checkInInput.value = '';
+        checkOutInput.value = '';
+        selectedCheckIn.textContent = '--';
+        selectedCheckOut.textContent = '--';
+        nightsCount.textContent = '0 nights';
+        submitBtn.disabled = true;
+      }
+    }
+
+    // Initialize modal calendar with date selection
+    function initModalCalendar(roomId) {
+      const calendarEl = document.getElementById('modalCalendar');
+
+      if (modalCalendar) {
+        modalCalendar.destroy();
+        modalCalendar = null;
+      }
+
+      // Reset selection
+      selectedStartDate = null;
+      selectedEndDate = null;
+      updateSelectedDates();
+
+      if (!calendarEl) return;
+
+      // Calculate the valid range - allow up to 5 months from now
+      const today = toLocalDate(new Date());
+      const fiveMonthsLater = toLocalDate(new Date());
+      fiveMonthsLater.setMonth(fiveMonthsLater.getMonth() + 5);
+
+      modalCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,dayGridWeek'
+        },
+        height: 'auto',
+        contentHeight: 320,
+        events: getModalCalendarEvents(roomId),
+        selectable: true,
+        selectMirror: true,
+        showNonCurrentDates: true,
+        fixedWeekCount: false,
+        validRange: function(nowDate) {
+          // Allow selection from today (local midnight) up to 5 months from now
+          const today = getTodayLocal();
+          const endDate = new Date(today);
+          endDate.setMonth(endDate.getMonth() + 5);
+          return {
+            start: today,
+            end: endDate
+          };
+        },
+        select: function(info) {
+          // ULTRA DEBUG: Log raw info object
+          console.log('========== RAW SELECT INFO ==========');
+          console.log('info.start:', info.start, 'type:', typeof info.start);
+          console.log('info.end:', info.end, 'type:', typeof info.end);
+          console.log('info.start.toISOString():', info.start.toISOString ? info.start.toISOString() : 'N/A');
+          console.log('info.end.toISOString():', info.end.toISOString ? info.end.toISOString() : 'N/A');
+
+          const roomSelect = document.getElementById('roomSelect');
+          const roomId = roomSelect.value ? parseInt(roomSelect.value) : null;
+
+          if (!roomId) {
+            alert('Please select a room first');
+            modalCalendar.unselect();
+            return;
+          }
+
+          // SECURITY: Validate check-in date using STRING comparison (YYYY-MM-DD)
+          // This avoids timezone issues with Date object comparisons
+          const today = getTodayString();
+          const selectedCheckIn = getDateString(info.start);
+          const selectedCheckOut = getDateString(info.end);
+
+          console.log('[SELECT] ========== SELECTION DEBUG ==========');
+          console.log('[SELECT] info.start type:', typeof info.start, 'value:', info.start);
+          console.log('[SELECT] info.end type:', typeof info.end, 'value:', info.end);
+          console.log('[SELECT] Today (string):', today);
+          console.log('[SELECT] Selected check-in (string):', selectedCheckIn);
+          console.log('[SELECT] Selected check-out (string):', selectedCheckOut);
+          console.log('[SELECT] Room ID:', roomId);
+
+          // Validate not empty
+          if (!isValidDateString(selectedCheckIn)) {
+            alert('Invalid date selected. Please try again.');
+            modalCalendar.unselect();
+            return;
+          }
+
+          // BLOCK past dates, ALLOW today and future
+          // String comparison works correctly because YYYY-MM-DD sorts lexicographically
+          if (selectedCheckIn < today) {
+            console.log('[SELECT] REJECTED: selectedCheckIn < today');
+            alert('Check-in date cannot be in the past. Please select today or a future date.');
+            modalCalendar.unselect();
+            return;
+          }
+          console.log('[SELECT] ACCEPTED: date is today or future');
+
+          // Validate selection doesn't exceed 5 months
+          const maxEnd = new Date(info.start);
+          maxEnd.setMonth(maxEnd.getMonth() + 5);
+          if (info.end > maxEnd) {
+            alert('Maximum reservation period is 5 months. Please select a shorter range.');
+            modalCalendar.unselect();
+            return;
+          }
+
+          // Check for conflicts with confirmed reservations
+          // Use string dates for conflict checking to avoid timezone issues
+          console.log('[SELECT] Calling hasConflict with:', selectedCheckIn, 'to', selectedCheckOut);
+          if (hasConflict(roomId, selectedCheckIn, selectedCheckOut)) {
+            console.log('[SELECT] REJECTED: hasConflict returned true');
+            alert('Selected dates conflict with an existing confirmed reservation. Please choose different dates.');
+            modalCalendar.unselect();
+            return;
+          }
+          console.log('[SELECT] ACCEPTED: no conflict');
+
+          selectedStartDate = info.start;
+          selectedEndDate = info.end;
+          updateSelectedDates();
+
+          // Highlight selected range
+          modalCalendar.removeAllEvents();
+          modalCalendar.addEvent({
+            start: info.start,
+            end: info.end,
+            backgroundColor: 'rgba(79, 111, 224, 0.3)',
+            borderColor: 'var(--primary)',
+            textColor: 'var(--primary)',
+            display: 'background',
+            extendedProps: { status: 'selected' }
+          });
+          modalCalendar.addEventSource(getModalCalendarEvents(roomId));
+        },
+        dayCellClassNames: function(info) {
+          const classes = [];
+          const today = getTodayLocal();  // Use local midnight for today
+          const date = toLocalDate(info.date);
+
+          // Past dates are disabled (but today is allowed)
+          if (date < today) {
+            classes.push('fc-day-disabled');
+            return classes;
+          }
+
+          // Mark today with a special class
+          if (date.getTime() === today.getTime()) {
+            classes.push('fc-day-today');
+          }
+
+          // Check if date is within a blocked range for this room
+          // Use string comparison for consistency (blocked dates are now strings)
+          if (roomId) {
+            const dateStr = getDateString(date);
+            const blocked = getBlockedRanges(roomId);
+            for (const block of blocked) {
+              if (dateStr >= block.start && dateStr < block.end) {
+                classes.push('fc-day-blocked');
+                break;
+              }
+            }
+          }
+
+          // Highlight selected range
+          if (selectedStartDate && selectedEndDate) {
+            const selStart = toLocalDate(selectedStartDate);
+            const selEnd = toLocalDate(selectedEndDate);
+            if (date >= selStart && date < selEnd) {
+              classes.push('date-range-selected');
+            }
+          }
+
+          return classes;
+        },
+        dayCellContent: function(info) {
+          const dayNum = info.dayNumberText;
+          const date = toLocalDate(info.date);
+          const today = getTodayLocal();  // Use local midnight
+
+          if (date < today) {
+            return { html: '<div class="fc-daygrid-day-number text-muted">' + dayNum + '</div>' };
+          }
+
+          // Get status for this date in modal
+          const roomSelect = document.getElementById('roomSelect');
+          const modalRoomId = roomSelect.value ? parseInt(roomSelect.value) : null;
+          const statusInfo = getDateStatusInfo(date, modalRoomId);
+
+          let statusDot = '';
+          if (statusInfo.status !== 'available') {
+            const dotClass = statusInfo.status;
+            statusDot = '<div class="date-status-dot ' + dotClass + '" style="top: 2px; right: 2px; width: 7px; height: 7px;"></div>';
+          }
+
+          return { html: '<div class="fc-daygrid-day-number">' + dayNum + '</div>' + statusDot };
+        },
+        dayCellDidMount: function(info) {
+          const date = toLocalDate(info.date);
+          const today = toLocalDate(new Date());
+
+          if (date < today) return;
+
+          info.el.addEventListener('mouseenter', function(e) {
+            const statusInfo = getDateStatusInfo(date, roomId);
+            showTooltip(e, statusInfo);
+          });
+
+          info.el.addEventListener('mouseleave', function() {
+            hideTooltip();
+          });
+        }
+      });
+
+      modalCalendar.render();
+    }
+
+    // Handle room selection change
+    function onRoomSelect() {
+      const roomSelect = document.getElementById('roomSelect');
+      const selectedValue = roomSelect.value;
+
+      // Reset date selection
+      selectedStartDate = null;
+      selectedEndDate = null;
+      updateSelectedDates();
+
+      // Update the calendar
+      initModalCalendar(selectedValue ? parseInt(selectedValue) : null);
+    }
+
+    // Handle date selection change (for manual inputs if any)
+    function onDateSelect() {
+      // Legacy function - dates are now selected via calendar
+      calculateCost();
+    }
+
+    // Convert reservations to calendar events
+    function getCalendarEvents() {
+      const events = [];
+
+      // Add reservation events (skip completed - stay is finished)
+      reservations.forEach(res => {
+        if (!res.check_in || !res.check_out) return;
+        // Skip completed reservations - stay is finished
+        if (res.status === 'completed') return;
+
+        let color = '#ffc107'; // pending - yellow
+        let textColor = '#000';
+        if (res.status === 'confirmed') {
+          color = '#dc3545'; // red - Confirmed/Reserved per requirements
+          textColor = '#fff';
+        } else if (res.status === 'cancelled') {
+          color = '#6c757d'; // gray
+          textColor = '#fff';
+        }
+
+        events.push({
+          title: res.guest_name + ' - Room ' + res.room_number,
+          start: res.check_in,
+          end: res.check_out,
+          backgroundColor: color,
+          borderColor: color,
+          textColor: textColor,
+          extendedProps: {
+            guest: res.guest_name,
+            room: res.room_number,
+            status: res.status,
+            email: res.email,
+            phone: res.phone,
+            price: res.price || 0,
+            downpayment: res.downpayment_amount || 0
+          }
+        });
+      });
+
+      // Add active check-ins as occupied (cyan)
+      activeCheckins.forEach(checkin => {
+        const checkInDate = new Date(checkin.check_in_time);
+        const checkOutDate = checkin.check_out_time ? new Date(checkin.check_out_time) : new Date();
+
+        events.push({
+          title: checkin.guest_name + ' - Room ' + checkin.room_number + ' (Checked-in)',
+          start: checkInDate.toISOString().split('T')[0],
+          end: checkOutDate.toISOString().split('T')[0] || null,
+          backgroundColor: '#0dcaf0', // cyan for checked-in
+          borderColor: '#0dcaf0',
+          textColor: '#fff',
+          extendedProps: {
+            guest: checkin.guest_name,
+            room: checkin.room_number,
+            status: 'checked-in',
+            type: 'checkin'
+          }
+        });
+      });
+
+      return events;
+    }
+
+    // Global calendar variable
+    let calendar = null;
+    let tooltipTimeout = null;
+
+    // Tooltip functions
+    function showTooltip(event, tooltipData) {
+      const tooltip = document.getElementById('calendarTooltip');
+      if (!tooltip || !tooltipData) return;
+
+      let statusHtml = '';
+      const statusClass = 'status-' + (tooltipData.status || 'available');
+      const statusText = (tooltipData.status || 'available').charAt(0).toUpperCase() + (tooltipData.status || 'available').slice(1);
+
+      if (tooltipData.guest) {
+        statusHtml = `
+          <div class="tooltip-row">
+            <span class="tooltip-label">Guest</span>
+            <span class="tooltip-value">${tooltipData.guest}</span>
+          </div>
+        `;
+      }
+
+      tooltip.innerHTML = `
+        <div class="tooltip-header">
+          ${tooltipData.title || 'Date Availability'}
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+        ${statusHtml}
+        <div class="tooltip-row">
+          <span class="tooltip-label">Date</span>
+          <span class="tooltip-value">${tooltipData.dateStr}</span>
+        </div>
+        ${tooltipData.room ? `
+        <div class="tooltip-row">
+          <span class="tooltip-label">Room</span>
+          <span class="tooltip-value">${tooltipData.room}</span>
+        </div>
+        ` : ''}
+        ${tooltipData.nights ? `
+        <div class="tooltip-row">
+          <span class="tooltip-label">Duration</span>
+          <span class="tooltip-value">${tooltipData.nights} night${tooltipData.nights > 1 ? 's' : ''}</span>
+        </div>
+        ` : ''}
+      `;
+
+      const rect = event.target.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+
+      let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2) + window.scrollX;
+      let top = rect.bottom + 8 + window.scrollY;
+
+      // Keep tooltip within viewport
+      if (left < 10) left = 10;
+      if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10;
+      }
+      if (top + tooltipRect.height > window.innerHeight + window.scrollY) {
+        top = rect.top - tooltipRect.height - 8 + window.scrollY;
+      }
+
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+      tooltip.classList.add('visible');
+    }
+
+    function hideTooltip() {
+      const tooltip = document.getElementById('calendarTooltip');
+      if (tooltip) {
+        tooltip.classList.remove('visible');
+      }
+    }
+
+    // Get date status info for tooltip
+    function getDateStatusInfo(date, roomId) {
+      const dateObj = toLocalDate(date);
+      const dateStr = dateObj.toISOString().split('T')[0];
+      const result = {
+        dateStr: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        status: 'available',
+        room: null,
+        guest: null,
+        title: 'Available'
+      };
+
+      // Check reservations for this room
+      for (const res of reservations) {
+        if (roomId && res.room_id !== roomId) continue;
+        if (!res.check_in || !res.check_out) continue;
+
+        const resStart = toLocalDate(res.check_in);
+        const resEnd = toLocalDate(res.check_out);
+
+        if (dateObj >= resStart && dateObj < resEnd) {
+          // Priority: Confirmed > Pending > Available
+          if (res.status === 'confirmed') {
+            result.status = 'confirmed';
+            result.title = 'Room ' + res.room_number + ' - Reserved';
+            result.guest = res.guest_name;
+            result.room = res.room_number;
+            return result;
+          } else if (res.status === 'pending') {
+            result.status = 'pending';
+            result.title = 'Room ' + res.room_number + ' - Pending';
+            result.guest = res.guest_name;
+            result.room = res.room_number;
+          }
+        }
+      }
+
+      // Check active check-ins
+      for (const checkin of activeCheckins) {
+        if (roomId && checkin.room_id !== roomId) continue;
+
+        const checkInTime = toLocalDate(checkin.check_in_time);
+        const checkOutTime = checkin.check_out_time ? toLocalDate(checkin.check_out_time) : toLocalDate(new Date());
+
+        if (dateObj >= checkInTime && dateObj < checkOutTime) {
+          result.status = 'checked-in';
+          result.title = 'Room ' + checkin.room_number + ' - Occupied';
+          result.guest = checkin.guest_name;
+          result.room = checkin.room_number;
+          return result;
+        }
+      }
+
+      return result;
+    }
+
+    // Initialize Calendar
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: getCalendarEvents(),
+        eventContent: function(arg) {
+          return {
+            html: '<div class="fc-event-title">' + arg.event.title + '</div>'
+          };
+        },
+        eventClick: function(info) {
+          const props = info.event.extendedProps;
+          const status = props.type === 'checkin' ? 'checked-in' : (props.status || 'unknown');
+
+          document.getElementById('detailGuest').textContent = props.guest || 'N/A';
+          document.getElementById('detailRoom').textContent = 'Room ' + props.room || 'N/A';
+          document.getElementById('detailEmail').textContent = props.email || 'N/A';
+          document.getElementById('detailPhone').textContent = props.phone || 'N/A';
+          document.getElementById('detailCheckin').textContent = info.event.start ? info.event.start.toLocaleDateString() : 'N/A';
+          document.getElementById('detailCheckout').textContent = info.event.end ? info.event.end.toLocaleDateString() : 'N/A';
+
+          // Calculate nights and total
+          let total = 0;
+          if (info.event.start && info.event.end) {
+            const nights = Math.ceil((info.event.end - info.event.start) / (1000 * 60 * 60 * 24));
+            const price = props.price || 0;
+            total = nights * price;
+            document.getElementById('detailNights').textContent = nights + (nights === 1 ? ' night' : ' nights');
+            document.getElementById('detailPrice').textContent = currency + price.toLocaleString() + '/night';
+          } else {
+            document.getElementById('detailNights').textContent = 'N/A';
+            document.getElementById('detailPrice').textContent = currency + (props.price || 0).toLocaleString() + '/night';
+          }
+
+          // Downpayment and balance
+          const downpayment = parseFloat(props.downpayment) || 0;
+          const balance = total - downpayment;
+          document.getElementById('detailDownpayment').textContent = currency + downpayment.toLocaleString('en-US', {minimumFractionDigits: 2});
+          document.getElementById('detailBalance').textContent = currency + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+          const statusBadge = document.getElementById('detailStatus');
+          const statusClass = status === 'confirmed' ? 'success' : (status === 'cancelled' ? 'danger' : (status === 'checked-in' ? 'info' : 'warning'));
+          statusBadge.innerHTML = '<span class="badge bg-' + statusClass + '" style="padding: 0.5rem 1rem; font-size: 0.9rem;">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span>';
+
+          const modal = new bootstrap.Modal(document.getElementById('reservationDetailModal'));
+          modal.show();
+        },
+        dayCellClassNames: function(info) {
+          const classes = [];
+          const today = getTodayLocal();  // Use local midnight for today
+          const date = toLocalDate(info.date);
+
+          if (date < today) return [];
+
+          // Mark today with special class
+          if (date.getTime() === today.getTime()) {
+            classes.push('fc-day-today');
+          }
+
+          const selectedRoomId = document.getElementById('roomSelect')?.value;
+          const roomId = selectedRoomId ? parseInt(selectedRoomId) : null;
+
+          // Check for any reservation/checkin on this date
+          const statusInfo = getDateStatusInfo(date, roomId);
+          if (statusInfo.status !== 'available') {
+            classes.push('has-status');
+          }
+
+          // Highlight available days (no reservations, not today or past)
+          if (selectedRoomId) {
+            const checkOut = new Date(date);
+            checkOut.setDate(checkOut.getDate() + 1);
+            const dateStr = date.toISOString().split('T')[0];
+            const checkOutStr = checkOut.toISOString().split('T')[0];
+
+            if (isRoomAvailable(parseInt(selectedRoomId), dateStr, checkOutStr)) {
+              classes.push('fc-day-available');
+            }
+          }
+
+          return classes;
+        },
+        dayCellContent: function(info) {
+          const date = toLocalDate(info.date);
+          const today = getTodayLocal();  // Use local midnight for today
+          const selectedRoomId = document.getElementById('roomSelect')?.value;
+          const roomId = selectedRoomId ? parseInt(selectedRoomId) : null;
+
+          const statusInfo = getDateStatusInfo(date, roomId);
+
+          let statusDot = '';
+          if (date >= today && statusInfo.status !== 'available') {
+            const dotClass = statusInfo.status;
+            statusDot = '<div class="date-status-dot ' + dotClass + '"></div>';
+          }
+
+          return { html: '<div class="fc-daygrid-day-number">' + info.dayNumberText + '</div>' + statusDot };
+        },
+        dayCellDidMount: function(info) {
+          const date = toLocalDate(info.date);
+          const today = toLocalDate(new Date());
+
+          if (date < today) return;
+
+          const selectedRoomId = document.getElementById('roomSelect')?.value;
+
+          info.el.addEventListener('mouseenter', function(e) {
+            const statusInfo = getDateStatusInfo(date, selectedRoomId ? parseInt(selectedRoomId) : null);
+            showTooltip(e, statusInfo);
+          });
+
+          info.el.addEventListener('mouseleave', function() {
+            hideTooltip();
+          });
+        }
+      });
+      calendar.render();
+
+      // Initialize modal calendar when modal is shown
+      const addModal = document.getElementById('addReservationModal');
+      addModal.addEventListener('shown.bs.modal', function() {
+        // Destroy and recreate calendar to ensure proper rendering
+        if (modalCalendar) {
+          modalCalendar.destroy();
+          modalCalendar = null;
+        }
+        selectedStartDate = null;
+        selectedEndDate = null;
+
+        // Render calendar after modal is fully shown
+        setTimeout(function() {
+          initModalCalendar(null);
+          modalCalendar.render();
+          modalCalendar.updateSize();
+        }, 100);
+      });
+
+      // Reset modal on close
+      addModal.addEventListener('hidden.bs.modal', function() {
+        if (modalCalendar) {
+          modalCalendar.destroy();
+          modalCalendar = null;
+        }
+        selectedStartDate = null;
+        selectedEndDate = null;
+        document.getElementById('roomSelect').value = '';
+        document.getElementById('checkIn').value = '';
+        document.getElementById('checkOut').value = '';
+        document.getElementById('selectedCheckIn').textContent = '--';
+        document.getElementById('selectedCheckOut').textContent = '--';
+        document.getElementById('nightsCount').textContent = '0';
+        document.getElementById('submitBtn').disabled = true;
+
+        // Reset payment summary
+        const downpaymentInput = document.getElementById('downpaymentInput');
+        if (downpaymentInput) downpaymentInput.value = '';
+        const summaryRoomRate = document.getElementById('summaryRoomRate');
+        if (summaryRoomRate) summaryRoomRate.innerHTML = currency + '0.00<span class="text-muted">/night</span>';
+        const summaryNights = document.getElementById('summaryNights');
+        if (summaryNights) summaryNights.textContent = '0';
+        const summaryTotal = document.getElementById('summaryTotal');
+        if (summaryTotal) summaryTotal.textContent = currency + '0.00';
+        const downpaymentSummaryRow = document.getElementById('downpaymentSummaryRow');
+        if (downpaymentSummaryRow) downpaymentSummaryRow.style.display = 'none';
+      });
+    });
+
+    // Reload calendar events
+    function reloadCalendarEvents() {
+      if (calendar) {
+        calendar.removeAllEvents();
+        getCalendarEvents().forEach(event => calendar.addEvent(event));
+      }
+    }
+
+    // Switch between views
+    function switchView(view) {
+      const calendarView = document.getElementById('calendarView');
+      const tableView = document.getElementById('tableView');
+      const calendarBtn = document.getElementById('calendarBtn');
+      const tableBtn = document.getElementById('tableBtn');
+      const legend = document.getElementById('legend');
+
+      if (view === 'calendar') {
+        calendarView.style.display = 'block';
+        tableView.style.display = 'none';
+        calendarBtn.classList.add('active');
+        tableBtn.classList.remove('active');
+        legend.style.display = 'flex';
+      } else {
+        calendarView.style.display = 'none';
+        tableView.style.display = 'block';
+        calendarBtn.classList.remove('active');
+        tableBtn.classList.add('active');
+        legend.style.display = 'none';
+      }
+    }
+
+    // Filter table
+    function filterTable() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById('dataTable');
+      const rows = table.getElementsByTagName('tr');
+
+      for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        let found = false;
+        for (let j = 0; j < cells.length; j++) {
+          if (cells[j].textContent.toLowerCase().includes(filter)) {
+            found = true;
+            break;
+          }
+        }
+        rows[i].style.display = found ? '' : 'none';
+      }
+    }
+
+    // Calculate and update full payment summary
+    function calculatePaymentSummary() {
+      const roomSelect = document.getElementById('roomSelect');
+      const checkIn = document.getElementById('checkIn');
+      const checkOut = document.getElementById('checkOut');
+      const downpaymentInput = document.getElementById('downpaymentInput');
+      const downpaymentError = document.getElementById('downpaymentError');
+
+      const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+      const price = parseFloat(selectedOption?.dataset?.price) || 0;
+      const downpayment = parseFloat(downpaymentInput?.value) || 0;
+
+      // Summary elements
+      const summaryRoomRate = document.getElementById('summaryRoomRate');
+      const summaryTotal = document.getElementById('summaryTotal');
+      const summaryDownpayment = document.getElementById('summaryDownpayment');
+      const summaryBalance = document.getElementById('summaryBalance');
+      const downpaymentSummaryRow = document.getElementById('downpaymentSummaryRow');
+
+      // Calculate nights
+      let nights = 0;
+      let total = 0;
+
+      if (checkIn.value && checkOut.value && price > 0) {
+        const d1 = new Date(checkIn.value);
+        const d2 = new Date(checkOut.value);
+        nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+        total = nights * price;
+      }
+
+      // Update room rate display
+      if (summaryRoomRate) {
+        summaryRoomRate.innerHTML = currency + price.toLocaleString('en-US', {minimumFractionDigits: 2}) + '<span class="text-muted">/night</span>';
+      }
+
+      // Update total
+      if (summaryTotal) {
+        summaryTotal.textContent = currency + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+      }
+
+      // Validate downpayment
+      let isValid = true;
+      if (downpaymentInput && downpaymentError) {
+        if (downpayment > total && total > 0) {
+          downpaymentInput.classList.add('is-invalid');
+          downpaymentError.textContent = 'Downpayment cannot exceed total price of ' + currency + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+          downpaymentError.style.display = 'block';
+          isValid = false;
+        } else {
+          downpaymentInput.classList.remove('is-invalid');
+          downpaymentError.style.display = 'none';
+        }
+      }
+
+      // Update downpayment and balance display
+      if (downpayment > 0 && total > 0) {
+        if (downpaymentSummaryRow) downpaymentSummaryRow.style.display = 'flex';
+
+        if (summaryDownpayment) {
+          summaryDownpayment.textContent = '-' + currency + downpayment.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+        if (summaryBalance) {
+          const balance = total - downpayment;
+          summaryBalance.textContent = currency + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+          summaryBalance.className = balance > 0 ? 'fw-bold text-danger fs-5' : 'fw-bold text-success fs-5';
+        }
+      } else {
+        if (downpaymentSummaryRow) downpaymentSummaryRow.style.display = 'none';
+      }
+
+      return isValid;
+    }
+
+    // Legacy function for compatibility
+    function calculateCost() {
+      calculatePaymentSummary();
+    }
+
+    // Legacy function for compatibility
+    function validateDownpayment() {
+      return calculatePaymentSummary();
+    }
+
+    // Override submit to validate
+    document.getElementById('reservationForm').addEventListener('submit', function(e) {
+      if (!calculatePaymentSummary()) {
+        e.preventDefault();
+        return false;
+      }
+      return true;
+    });
+  </script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      sidebar.classList.toggle('show');
+      backdrop.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function(e) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      if (window.innerWidth < 992 && !sidebar.contains(e.target) && !e.target.classList.contains('mobile-nav-btn') && sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

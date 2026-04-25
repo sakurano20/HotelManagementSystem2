@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout Summary</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f5f7fa;
+    }
+
+    .receipt-container {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .receipt-header {
+      background: linear-gradient(135deg, #4f6fe0, #3a5299);
+      color: #fff;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .receipt-header h2 {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .receipt-header p {
+      margin: 0.5rem 0 0;
+      opacity: 0.9;
+    }
+
+    .receipt-body {
+      padding: 2rem;
+    }
+
+    .guest-info {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .guest-info h4 {
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #4f6fe0;
+    }
+
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px dashed #e9ecef;
+    }
+
+    .totals {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-top: 2rem;
+    }
+
+    .totals .row {
+      padding: 0.5rem 0;
+    }
+
+    .totals .final {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4f6fe0;
+      border-top: 2px solid #4f6fe0;
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+
+    .receipt-footer {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      text-align: center;
+      color: #6c757d;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .receipt-container {
+        box-shadow: none;
+        margin: 0;
+      }
+
+      .no-print {
+        display: none;
+      }
+    }
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1050;
+        width: 260px !important;
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+      }
+      .sidebar-backdrop.show {
+        display: block;
+      }
+      .main-content {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+      .mobile-nav-btn {
+        display: flex !important;
+      }
+      .top-bar {
+        padding: 1rem !important;
+      }
+      .top-bar h1 {
+        font-size: 1.3rem;
+      }
+    }
+    @media (max-width: 767px) {
+      .table-responsive {
+        font-size: 0.85rem;
+      }
+      .card-body {
+        padding: 1rem !important;
+      }
+    }
+    .mobile-nav-btn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1030;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table {
+      min-width: 600px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar Backdrop for Mobile -->
+  <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <!-- Mobile Navigation Button -->
+  <button class="mobile-nav-btn" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div class="container-fluid p-0">
+    <div class="row g-0">
+      <!-- Sidebar -->
+      <nav class="col-md-2 sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-logo">
+            {% if system_settings.logo_icon == 'hotel' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+            </svg>
+            {% elif system_settings.logo_icon == 'grid' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+            </svg>
+            {% elif system_settings.logo_icon == 'briefcase' %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+            </svg>
+            {% else %}
+            <svg viewBox="0 0 24 24" fill="white">
+              <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.66l-7-3.5V8.82zm9 11.16v-7.66l7-3.5v7.66l-7 3.5z"/>
+            </svg>
+            {% endif %}
+          </div>
+          <div class="brand-text">
+            <h4>DNZTech</h4>
+            <span>Management System</span>
+          </div>
+        </div>
+        <ul class="nav flex-column mt-3">
+          <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+          <li class="nav-item"><a href="{{ url_for('rooms') }}" class="nav-link"><i class="bi bi-door-open me-2"></i>Rooms</a></li>
+          <li class="nav-item"><a href="{{ url_for('reservations') }}" class="nav-link"><i class="bi bi-calendar-check me-2"></i>Reservations</a></li>
+          <li class="nav-item"><a href="{{ url_for('checkins') }}" class="nav-link"><i class="bi bi-box-arrow-in-right me-2"></i>Check-ins</a></li>
+          <li class="nav-item"><a href="{{ url_for('foods') }}" class="nav-link"><i class="bi bi-cup-hot-fill me-2"></i>Foods</a></li>
+          <li class="nav-item"><a href="{{ url_for('food_orders') }}" class="nav-link"><i class="bi bi-receipt me-2"></i>Food Orders</a></li>
+          <li class="nav-item"><a href="{{ url_for('addon_orders') }}" class="nav-link"><i class="bi bi-plus-circle me-2"></i>Addon Orders</a></li>
+          <li class="nav-item"><a href="{{ url_for('addons') }}" class="nav-link"><i class="bi bi-puzzle me-2"></i>Add-ons</a></li>
+          <li class="nav-item"><a href="{{ url_for('payments') }}" class="nav-link"><i class="bi bi-credit-card me-2"></i>Payments</a></li>
+          <li class="nav-item"><a href="{{ url_for('settings') }}" class="nav-link"><i class="bi bi-gear me-2"></i>Settings</a></li>
+          <li class="nav-item"><a href="{{ url_for('reports') }}" class="nav-link"><i class="bi bi-file-earmark-bar-graph me-2"></i>Reports</a></li>
+          <li class="nav-item mt-5"><a href="{{ url_for('logout') }}" class="nav-link"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="col-md-10 main-content">
+    <div class="receipt-container">
+      <div class="receipt-header">
+        <h2><i class="bi bi-building"></i> {{ system_settings.company_name or 'DNZTech IMS' }}</h2>
+        {% if system_settings.company_address %}
+        <p class="mb-1">{{ system_settings.company_address }}</p>
+        {% endif %}
+        <p class="mb-1">
+          {% if system_settings.company_phone %}{{ system_settings.company_phone }}{% endif %}
+          {% if system_settings.company_email %} | {{ system_settings.company_email }}{% endif %}
+        </p>
+        {% if system_settings.company_website %}
+        <p class="mb-1">{{ system_settings.company_website }}</p>
+        {% endif %}
+        <p><small>Checkout Summary</small></p>
+        <p><small>{{ checkin.check_in_time.strftime('%Y-%m-%d %H:%M') }}</small></p>
+      </div>
+
+      <div class="receipt-body">
+        <div class="guest-info">
+          <h4><i class="bi bi-person me-2"></i>Guest Information</h4>
+          <div class="info-row">
+            <span>Guest Name</span>
+            <strong>{{ checkin.guest_name }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Room</span>
+            <strong>{{ checkin.room_number }} ({{ checkin.room_type|title }})</strong>
+          </div>
+          <div class="info-row">
+            <span>Check-in</span>
+            <span>{{ checkin.check_in_time.strftime('%Y-%m-%d %H:%M') }}</span>
+          </div>
+          <div class="info-row">
+            <span>Check-out</span>
+            <span>{{ checkin.check_out_time.strftime('%Y-%m-%d %H:%M') if checkin.check_out_time else 'Now' }}</span>
+          </div>
+        </div>
+
+        <div class="room-charges">
+          <h5 class="section-title"><i class="bi bi-door-open me-2"></i>Room Charges</h5>
+          <div class="item-row">
+            <span>Room {{ checkin.room_number }} ({{ checkin.room_type|title }})</span>
+            <span>{{ nights }} night{{ 's' if nights > 1 else '' }} x {{ system_settings.currency_symbol or '$' }}{{ checkin.room_price|format_currency }}</span>
+          </div>
+          <div class="item-row" style="justify-content: flex-end; font-weight: 600;">
+            <span>Room Total: {{ system_settings.currency_symbol or '$' }}{{ room_total|round(2)|format_currency }}</span>
+          </div>
+        </div>
+
+        {% if food_orders %}
+        <div class="food-charges" style="margin-top: 2rem;">
+          <h5 class="section-title"><i class="bi bi-cup-hot me-2"></i>Food & Beverages</h5>
+          {% for order in food_orders %}
+          <div class="item-row">
+            <span>{{ order.item_name }} x {{ order.quantity }}</span>
+            <span>{{ system_settings.currency_symbol or '$' }}{{ (order.quantity * order.price)|round(2)|format_currency }}</span>
+          </div>
+          {% endfor %}
+          <div class="item-row" style="justify-content: flex-end; font-weight: 600;">
+            <span>Food Total: {{ system_settings.currency_symbol or '$' }}{{ food_total|round(2)|format_currency }}</span>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if addon_orders %}
+        <div class="addon-charges" style="margin-top: 2rem;">
+          <h5 class="section-title"><i class="bi bi-puzzle me-2"></i>Add-ons</h5>
+          {% for order in addon_orders %}
+          <div class="item-row">
+            <span>{{ order.addon_name }} x {{ order.quantity|default(1) }}</span>
+            <span>{{ system_settings.currency_symbol or '$' }}{{ (order.quantity|default(1) * order.price)|round(2)|format_currency }}</span>
+          </div>
+          {% endfor %}
+          <div class="item-row" style="justify-content: flex-end; font-weight: 600;">
+            <span>Add-ons Total: {{ system_settings.currency_symbol or '$' }}{{ addon_total|round(2)|format_currency }}</span>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="totals">
+          <div class="row">
+            <div class="col-6">Room Charges:</div>
+            <div class="col-6 text-end">{{ system_settings.currency_symbol or '$' }}{{ room_total|round(2)|format_currency }}</div>
+          </div>
+          {% if food_orders %}
+          <div class="row">
+            <div class="col-6">Food & Beverages:</div>
+            <div class="col-6 text-end">{{ system_settings.currency_symbol or '$' }}{{ food_total|round(2)|format_currency }}</div>
+          </div>
+          {% endif %}
+          {% if addon_orders %}
+          <div class="row">
+            <div class="col-6">Add-ons:</div>
+            <div class="col-6 text-end">{{ system_settings.currency_symbol or '$' }}{{ addon_total|round(2)|format_currency }}</div>
+          </div>
+          {% endif %}
+          <div class="row">
+            <div class="col-6">Tax ({{ tax_rate }}%):</div>
+            <div class="col-6 text-end">{{ system_settings.currency_symbol or '$' }}{{ tax|round(2)|format_currency }}</div>
+          </div>
+          <div class="row final">
+            <div class="col-6">Grand Total:</div>
+            <div class="col-6 text-end">{{ system_settings.currency_symbol or '$' }}{{ final_total|round(2)|format_currency }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-footer">
+        <p class="mb-3">Thank you for staying with us!</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+          <button onclick="window.print()" class="btn btn-outline-secondary no-print">
+            <i class="bi bi-printer me-2"></i>Print Summary
+          </button>
+          <form action="{{ url_for('create_payment_at_checkout', id=checkin.id) }}" method="POST" class="no-print" onsubmit="return confirm('Process payment and complete checkout for {{ checkin.guest_name }}?');">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-credit-card me-2"></i>Process Payment ({{ system_settings.currency_symbol or '$' }}{{ final_total|round(2)|format_currency }})
+            </button>
+          </form>
+        </div>
+        <div class="mt-3 pt-3 border-top no-print">
+          <a href="{{ url_for('reservations') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar-check me-2"></i>Back to Reservations
+          </a>
+          <a href="{{ url_for('checkins') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Back to Check-ins
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+  </div>
+</div>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      if (sidebar && backdrop) {
+        sidebar.classList.toggle('show');
+        backdrop.classList.toggle('show');
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      if (window.innerWidth < 992 && sidebar && backdrop && !sidebar.contains(e.target) && !e.target.classList.contains('mobile-nav-btn') && sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+
+</html>

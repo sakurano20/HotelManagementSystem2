@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - DNZTech IMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f6fe0;
+      --primary-dark: #3a5299;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1e2a4a 0%, #2d3e6d 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .login-card .brand {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      padding: 3rem 2rem;
+      text-align: center;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card .brand::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(10%, 10%); }
+    }
+    .login-card .brand-logo {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+      position: relative;
+      z-index: 1;
+    }
+    .login-card .brand-logo svg { width: 48px; height: 48px; }
+    .login-card .brand h1 {
+      font-weight: 800;
+      margin: 0;
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+    }
+    .login-card .brand span {
+      font-size: 0.75rem;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .login-card form { padding: 2.5rem; }
+    .input-icon-group {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .input-icon-group .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #adb5bd;
+      font-size: 1.1rem;
+      z-index: 2;
+      transition: color 0.3s;
+    }
+    .input-icon-group .form-control {
+      padding-left: 3rem;
+      padding-right: 1rem;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+    .input-icon-group .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 111, 224, 0.15);
+    }
+    .input-icon-group .form-control:focus ~ .input-icon,
+    .input-icon-group:focus-within .input-icon {
+      color: var(--primary);
+    }
+    .input-icon-group label {
+      position: absolute;
+      top: -0.6rem;
+      left: 0.75rem;
+      background: #fff;
+      padding: 0 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-login {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 12px;
+      padding: 1rem;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+    }
+    .btn-login:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(79, 111, 224, 0.5);
+    }
+    .btn-login:active {
+      transform: translateY(-1px);
+    }
+    .login-footer {
+      text-align: center;
+      padding: 1.5rem 2.5rem 2rem;
+      color: #adb5bd;
+      font-size: 0.85rem;
+    }
+    .login-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .show-password {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #adb5bd;
+      cursor: pointer;
+      padding: 0.25rem;
+      z-index: 2;
+    }
+    .show-password:hover { color: var(--primary); }
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1050;
+        width: 260px !important;
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+      }
+      .sidebar-backdrop.show {
+        display: block;
+      }
+      .main-content {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+      .mobile-nav-btn {
+        display: flex !important;
+      }
+      .top-bar {
+        padding: 1rem !important;
+      }
+      .top-bar h1 {
+        font-size: 1.3rem;
+      }
+    }
+    @media (max-width: 767px) {
+      .table-responsive {
+        font-size: 0.85rem;
+      }
+      .card-body {
+        padding: 1rem !important;
+      }
+    }
+    .mobile-nav-btn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1030;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table {
+      min-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Navigation Button -->
+  <button class="mobile-nav-btn" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-logo">
+          {% if system_settings.get('logo_icon') == 'hotel' %}
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+          </svg>
+          {% elif system_settings.get('logo_icon') == 'grid' %}
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+          </svg>
+          {% elif system_settings.get('logo_icon') == 'briefcase' %}
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+          </svg>
+          {% else %}
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.66l-7-3.5V8.82zm9 11.16v-7.66l7-3.5v7.66l-7 3.5z"/>
+          </svg>
+          {% endif %}
+        </div>
+        <h1>{{ system_settings.get('app_name', 'DNZTech IMS') }}</h1>
+        <span>Management System</span>
+      </div>
+      <form action="/login" method="POST">
+        <div class="input-icon-group">
+          <label>Email Address</label>
+          <i class="bi bi-envelope-at-fill input-icon"></i>
+          <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+        </div>
+        <div class="input-icon-group">
+          <label>Password</label>
+          <i class="bi bi-lock-fill input-icon"></i>
+          <input type="password" name="password" id="passwordField" class="form-control" placeholder="Enter your password" required>
+          <button type="button" class="show-password" onclick="togglePassword()">
+            <i class="bi bi-eye-fill" id="eyeIcon"></i>
+          </button>
+        </div>
+        <button type="submit" class="btn btn-primary btn-login w-100">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
+      </form>
+      <div class="login-footer">
+        <span>&copy; 2024 {{ system_settings.get('company_name', 'DNZTech') }}. All rights reserved.</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    function togglePassword() {
+      const passwordField = document.getElementById('passwordField');
+      const eyeIcon = document.getElementById('eyeIcon');
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeIcon.className = 'bi bi-eye-slash-fill';
+      } else {
+        passwordField.type = 'password';
+        eyeIcon.className = 'bi bi-eye-fill';
+      }
+    }
+  </script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      if (sidebar && backdrop) {
+        sidebar.classList.toggle('show');
+        backdrop.classList.toggle('show');
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      if (window.innerWidth < 992 && sidebar && backdrop && !sidebar.contains(e.target) && !e.target.classList.contains('mobile-nav-btn') && sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

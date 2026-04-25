@@ -1,0 +1,131 @@
+/* =========================================
+   SIDEBAR BRAND STYLES - SHARED
+   Use in all templates via @import or copy
+   ========================================= */
+
+/* Brand Section */
+.sidebar .brand {
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* Logo Icon Box (when using SVG) */
+.sidebar .brand-logo {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #4f6fe0, #58a6ff);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(79, 111, 224, 0.4);
+  flex-shrink: 0;
+}
+
+.sidebar .brand-logo svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Logo Image (when using uploaded logo) */
+.sidebar .brand-img {
+  width: auto;
+  max-width: 160px;
+  height: 70px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f6fe0, #58a6ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 8px 10px;
+}
+
+.sidebar .brand-img img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* Brand Text */
+.sidebar .brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar .brand-text h4 {
+  color: #fff;
+  font-weight: 800;
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.sidebar .brand-text span {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .sidebar .brand {
+    padding: 1rem 0.75rem 0.75rem;
+  }
+  .sidebar .brand-img {
+    max-width: 130px;
+    height: 60px;
+  }
+  .sidebar .brand-logo {
+    width: 55px;
+    height: 55px;
+  }
+  .sidebar .brand-logo svg {
+    width: 32px;
+    height: 32px;
+  }
+  .sidebar .brand-text h4 {
+    font-size: 0.9rem;
+  }
+  .sidebar .brand-text span {
+    font-size: 0.55rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar .brand {
+    padding: 0.75rem 0.5rem 0.5rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  .sidebar .brand-img {
+    max-width: 140px;
+    height: 55px;
+  }
+  .sidebar .brand-logo {
+    width: 50px;
+    height: 50px;
+  }
+  .sidebar .brand-logo svg {
+    width: 28px;
+    height: 28px;
+  }
+  .sidebar .brand-text {
+    text-align: center;
+  }
+  .sidebar .brand-text h4 {
+    font-size: 0.85rem;
+  }
+  .sidebar .brand-text span {
+    font-size: 0.55rem;
+  }
+}
